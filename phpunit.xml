@@ -18,7 +18,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing" force="true"/>
-        <env name="APP_KEY" value="base64:dGVzdGluZ2tleXRoYXRpczMyYnl0ZXM=" force="true"/>
+        <env name="APP_KEY" value="base64:rGTWn3qE1sxideY8NfUA1Oz/mxOk/M+tVikVgRWqc3Y=" force="true"/>
         <env name="DB_CONNECTION" value="sqlite" force="true"/>
         <env name="DB_DATABASE" value=":memory:" force="true"/>
         <env name="MONGODB_DATABASE" value="live_chat_test" force="true"/>

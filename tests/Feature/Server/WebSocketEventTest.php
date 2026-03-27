@@ -101,6 +101,7 @@ class WebSocketEventTest extends TestCase
 
     public function test_reaction_dispatches_event(): void
     {
+        $this->skipIfNoMongo();
         Event::fake([ReactionAdded::class]);
 
         $response = $this->postJson(
@@ -124,6 +125,7 @@ class WebSocketEventTest extends TestCase
 
     public function test_read_receipt_dispatches_event(): void
     {
+        $this->skipIfNoMongo();
         Event::fake([MessageRead::class]);
 
         $response = $this->postJson(

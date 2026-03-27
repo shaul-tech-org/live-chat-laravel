@@ -25,6 +25,7 @@ class EventTest extends TestCase
 
     public function test_submit_event(): void
     {
+        $this->skipIfNoMongo();
         $response = $this->postJson('/api/events', [
             'event_type' => 'page_view',
             'page_url' => 'https://example.com/products',

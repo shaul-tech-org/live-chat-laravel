@@ -34,6 +34,7 @@ class TranscriptTest extends TestCase
 
     public function test_request_transcript(): void
     {
+        $this->skipIfNoMongo();
         $response = $this->postJson("/api/rooms/{$this->room->id}/transcript", [
             'email' => 'visitor@example.com',
         ], ['X-API-Key' => $this->apiKey]);

@@ -10,6 +10,7 @@
 // 테스트용 DB 설정 강제 적용 (Docker 환경변수 오버라이드)
 $testEnvOverrides = [
     'APP_ENV' => 'testing',
+    'APP_KEY' => 'base64:rGTWn3qE1sxideY8NfUA1Oz/mxOk/M+tVikVgRWqc3Y=',
     'DB_CONNECTION' => 'sqlite',
     'DB_DATABASE' => ':memory:',
     'DB_HOST' => '',

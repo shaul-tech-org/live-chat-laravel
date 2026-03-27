@@ -38,6 +38,7 @@ class ReactionControllerTest extends TestCase
 
     public function test_reaction_creates_and_broadcasts(): void
     {
+        $this->skipIfNoMongo();
         Event::fake([ReactionAdded::class]);
 
         $response = $this->postJson('/api/rooms/' . $this->room->id . '/reactions', [

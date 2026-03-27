@@ -38,6 +38,7 @@ class ReadReceiptControllerTest extends TestCase
 
     public function test_read_receipt_broadcasts_event(): void
     {
+        $this->skipIfNoMongo();
         Event::fake([MessageRead::class]);
 
         $response = $this->postJson('/api/rooms/' . $this->room->id . '/read', [
