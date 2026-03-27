@@ -8,7 +8,7 @@ class LoginTest extends TestCase
 {
     public function test_health_endpoint(): void
     {
-        $this->getJson('/api/health')->assertStatus(200)->assertJson(['status' => 'ok']);
+        $this->getJson('/api/health')->assertStatus(200)->assertJson(['success' => true, 'data' => ['status' => 'ok']]);
     }
 
     public function test_login_with_valid_credentials(): void

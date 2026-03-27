@@ -36,10 +36,10 @@ class RoomControllerTest extends TestCase
         ], ['X-API-Key' => $this->apiKey]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['id', 'tenant_id', 'visitor_id', 'visitor_name', 'status']);
+            ->assertJsonStructure(['success', 'data' => ['id', 'tenant_id', 'visitor_id', 'visitor_name', 'status']]);
 
-        $this->assertEquals($this->tenant->id, $response->json('tenant_id'));
-        $this->assertEquals('open', $response->json('status'));
+        $this->assertEquals($this->tenant->id, $response->json('data.tenant_id'));
+        $this->assertEquals('open', $response->json('data.status'));
     }
 
     // --- Api\RoomController: visitorRooms ---
@@ -133,7 +133,7 @@ class RoomControllerTest extends TestCase
         ], ['Authorization' => 'Bearer ' . $token]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('status', 'closed');
+            ->assertJsonPath('data.status', 'closed');
 
         $this->assertNotNull(ChatRoom::find($room->id)->closed_at);
     }

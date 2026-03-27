@@ -32,7 +32,7 @@ class EventTest extends TestCase
         ], ['X-API-Key' => $this->apiKey]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['id', 'event_type', 'page_url']);
+            ->assertJsonStructure(['success', 'data' => ['id', 'event_type', 'page_url']]);
     }
 
     public function test_submit_event_without_event_type(): void

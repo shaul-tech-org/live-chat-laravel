@@ -3,30 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ChatRoom;
+use App\Http\Requests\Api\RequestTranscriptRequest;
+use App\Http\Responses\ApiResponse;
+use App\Services\RoomService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class TranscriptController extends Controller
 {
-    public function store(Request $request, string $id): JsonResponse
+    public function __construct(
+        private readonly RoomService $roomService,
+    ) {}
+
+    public function store(RequestTranscriptRequest $request, string $id): JsonResponse
     {
-        $validated = $request->validate([
-            'email' => 'required|email|max:255',
-        ]);
+        $room = $this->roomService->findForTenant($id, $request->get('tenant_id'));
 
-        $room = ChatRoom::find($id);
-
-        if (!$room) {
-            return response()->json(['message' => '채팅방을 찾을 수 없습니다.'], 404);
-        }
-
-        // TODO: Fetch messages from MongoDB and send email
-        // For now, return the transcript request confirmation
-
-        return response()->json([
+        return ApiResponse::success([
             'room_id' => $room->id,
-            'email' => $validated['email'],
+            'email' => $request->validated('email'),
             'status' => 'queued',
             'message' => '대화 내역이 이메일로 전송될 예정입니다.',
         ]);

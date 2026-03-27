@@ -42,10 +42,10 @@ class LinkPreviewTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['title', 'description', 'image', 'url'])
-            ->assertJsonPath('title', 'Example Title')
-            ->assertJsonPath('description', 'Example Description')
-            ->assertJsonPath('image', 'https://example.com/image.jpg');
+            ->assertJsonStructure(['success', 'data' => ['title', 'description', 'image', 'url']])
+            ->assertJsonPath('data.title', 'Example Title')
+            ->assertJsonPath('data.description', 'Example Description')
+            ->assertJsonPath('data.image', 'https://example.com/image.jpg');
     }
 
     public function test_link_preview_without_url(): void

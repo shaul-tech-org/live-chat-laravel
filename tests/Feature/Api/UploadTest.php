@@ -36,7 +36,7 @@ class UploadTest extends TestCase
         ], ['X-API-Key' => $this->apiKey]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['file_url', 'file_name', 'file_size', 'mime_type']);
+            ->assertJsonStructure(['success', 'data' => ['file_url', 'file_name', 'file_size', 'mime_type']]);
     }
 
     public function test_upload_file_too_large(): void
@@ -85,6 +85,6 @@ class UploadTest extends TestCase
         ], ['X-API-Key' => $this->apiKey]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['file_url', 'file_name', 'file_size', 'mime_type']);
+            ->assertJsonStructure(['success', 'data' => ['file_url', 'file_name', 'file_size', 'mime_type']]);
     }
 }

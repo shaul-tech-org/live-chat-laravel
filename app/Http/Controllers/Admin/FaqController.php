@@ -3,42 +3,36 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\FaqEntry;
+use App\Http\Requests\Admin\CreateFaqRequest;
+use App\Http\Resources\FaqResource;
+use App\Http\Responses\ApiResponse;
+use App\Services\FaqService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class FaqController extends Controller
 {
+    public function __construct(
+        private readonly FaqService $faqService,
+    ) {}
+
     public function index(): JsonResponse
     {
-        $faqEntries = FaqEntry::orderByDesc('created_at')->paginate(20);
+        $faqs = $this->faqService->listAll();
 
-        return response()->json($faqEntries);
+        return ApiResponse::paginated(FaqResource::collection($faqs));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(CreateFaqRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'tenant_id' => 'required|uuid',
-            'keyword' => 'required|string|max:255',
-            'answer' => 'required|string',
-        ]);
+        $faq = $this->faqService->create($request->validated());
 
-        $faq = FaqEntry::create($validated);
-
-        return response()->json($faq, 201);
+        return ApiResponse::created(new FaqResource($faq));
     }
 
     public function destroy(string $id): JsonResponse
     {
-        $faq = FaqEntry::find($id);
+        $this->faqService->delete($id);
 
-        if (!$faq) {
-            return response()->json(['message' => 'FAQ를 찾을 수 없습니다.'], 404);
-        }
-
-        $faq->delete();
-
-        return response()->json(['message' => 'FAQ가 삭제되었습니다.']);
+        return ApiResponse::success(['message' => 'FAQ가 삭제되었습니다.']);
     }
 }

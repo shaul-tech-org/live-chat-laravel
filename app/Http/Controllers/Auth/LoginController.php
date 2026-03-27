@@ -2,32 +2,28 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Exceptions\UnauthorizedException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Responses\ApiResponse;
 use App\Services\BuiltinAuthService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
-    public function login(Request $request, BuiltinAuthService $auth): JsonResponse
-    {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
+    public function __construct(
+        private readonly BuiltinAuthService $authService,
+    ) {}
 
-        $token = $auth->login($validated['email'], $validated['password']);
+    public function login(LoginRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $token = $this->authService->login($validated['email'], $validated['password']);
 
         if (!$token) {
-            return response()->json([
-                'success' => false,
-                'error' => ['message' => '이메일 또는 비밀번호가 올바르지 않습니다.'],
-            ], 401);
+            throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => ['accessToken' => $token],
-        ]);
+        return ApiResponse::success(['accessToken' => $token]);
     }
 }

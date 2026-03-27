@@ -3,44 +3,36 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Agent;
+use App\Http\Requests\Admin\CreateAgentRequest;
+use App\Http\Resources\AgentResource;
+use App\Http\Responses\ApiResponse;
+use App\Services\AgentService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class AgentController extends Controller
 {
+    public function __construct(
+        private readonly AgentService $agentService,
+    ) {}
+
     public function index(): JsonResponse
     {
-        $agents = Agent::orderByDesc('created_at')->paginate(20);
+        $agents = $this->agentService->listAll();
 
-        return response()->json($agents);
+        return ApiResponse::paginated(AgentResource::collection($agents));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(CreateAgentRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'tenant_id' => 'required|uuid',
-            'user_id' => 'required|string|max:255',
-            'name' => 'nullable|string|max:100',
-            'email' => 'nullable|email|max:255',
-            'role' => 'required|string|in:admin,agent',
-        ]);
+        $agent = $this->agentService->create($request->validated());
 
-        $agent = Agent::create($validated);
-
-        return response()->json($agent, 201);
+        return ApiResponse::created(new AgentResource($agent));
     }
 
     public function destroy(string $id): JsonResponse
     {
-        $agent = Agent::find($id);
+        $this->agentService->delete($id);
 
-        if (!$agent) {
-            return response()->json(['message' => '상담원을 찾을 수 없습니다.'], 404);
-        }
-
-        $agent->delete();
-
-        return response()->json(['message' => '상담원이 삭제되었습니다.']);
+        return ApiResponse::success(['message' => '상담원이 삭제되었습니다.']);
     }
 }

@@ -2,36 +2,30 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\EventType;
 use App\Http\Controllers\Controller;
-use App\Models\Mongo\WidgetEvent;
+use App\Http\Requests\Api\SubmitEventRequest;
+use App\Http\Responses\ApiResponse;
+use App\Services\WidgetEventService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Enum;
 
 class EventController extends Controller
 {
-    public function store(Request $request): JsonResponse
+    public function __construct(
+        private readonly WidgetEventService $eventService,
+    ) {}
+
+    public function store(SubmitEventRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'event_type' => ['required', 'string', new Enum(EventType::class)],
-            'page_url' => 'nullable|string|max:2048',
-            'metadata' => 'nullable|array',
-        ]);
+        $event = $this->eventService->create(
+            $request->get('tenant_id'),
+            $request->validated(),
+            $request,
+        );
 
-        $event = WidgetEvent::create([
-            'tenant_id' => $request->get('tenant_id'),
-            'event_type' => $validated['event_type'],
-            'page_url' => $validated['page_url'] ?? null,
-            'metadata' => $validated['metadata'] ?? null,
-            'user_agent' => $request->userAgent(),
-            'ip_hash' => hash('sha256', $request->ip()),
-        ]);
-
-        return response()->json([
+        return ApiResponse::created([
             'id' => (string) $event->_id,
             'event_type' => $event->event_type,
             'page_url' => $event->page_url,
-        ], 201);
+        ]);
     }
 }

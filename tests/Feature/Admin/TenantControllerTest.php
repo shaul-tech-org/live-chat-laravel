@@ -31,13 +31,13 @@ class TenantControllerTest extends TestCase
         ]);
 
         $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
         $tenants = $response->json('data');
         $this->assertNotEmpty($tenants);
 
         $firstTenant = $tenants[0];
         $this->assertArrayHasKey('api_key_masked', $firstTenant);
         $this->assertEquals('ck_live_...', $firstTenant['api_key_masked']);
-        // Full api_key should NOT be exposed
         $this->assertArrayNotHasKey('api_key', $firstTenant);
     }
 
@@ -57,9 +57,9 @@ class TenantControllerTest extends TestCase
         ], ['Authorization' => 'Bearer ' . $token]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['id', 'name', 'domain', 'api_key']);
+            ->assertJsonStructure(['success', 'data' => ['id', 'name', 'domain', 'api_key']]);
 
-        $apiKey = $response->json('api_key');
+        $apiKey = $response->json('data.api_key');
         $this->assertStringStartsWith('ck_live_', $apiKey);
         $this->assertEquals(40, strlen($apiKey)); // ck_live_ (8) + 32 hex
     }
@@ -102,8 +102,8 @@ class TenantControllerTest extends TestCase
         ], ['Authorization' => 'Bearer ' . $token]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('name', 'After Update')
-            ->assertJsonPath('domain', 'https://updated.com');
+            ->assertJsonPath('data.name', 'After Update')
+            ->assertJsonPath('data.domain', 'https://updated.com');
 
         $fresh = Tenant::find($tenant->id);
         $this->assertEquals('After Update', $fresh->name);
@@ -147,9 +147,9 @@ class TenantControllerTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['api_key']);
+            ->assertJsonStructure(['success', 'data' => ['api_key']]);
 
-        $newKey = $response->json('api_key');
+        $newKey = $response->json('data.api_key');
         $this->assertNotEquals($oldKey, $newKey);
         $this->assertStringStartsWith('ck_live_', $newKey);
         $this->assertEquals(40, strlen($newKey));

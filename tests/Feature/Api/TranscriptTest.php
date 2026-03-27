@@ -39,7 +39,7 @@ class TranscriptTest extends TestCase
         ], ['X-API-Key' => $this->apiKey]);
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['room_id', 'email', 'status']);
+            ->assertJsonStructure(['success', 'data' => ['room_id', 'email', 'status']]);
     }
 
     public function test_request_transcript_without_email(): void

@@ -39,8 +39,8 @@ class AgentTest extends TestCase
         ], ['Authorization' => 'Bearer ' . $token]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['id', 'tenant_id', 'user_id', 'name', 'email', 'role']);
-        $this->assertEquals('상담원A', $response->json('name'));
+            ->assertJsonStructure(['success', 'data' => ['id', 'tenant_id', 'user_id', 'name', 'email', 'role']]);
+        $this->assertEquals('상담원A', $response->json('data.name'));
         $this->assertDatabaseHas('agents', ['user_id' => 'user-001']);
     }
 

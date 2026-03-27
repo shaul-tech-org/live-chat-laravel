@@ -63,9 +63,9 @@ class StatsTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['total_chats', 'avg_rating', 'daily']);
-        $this->assertEquals(2, $response->json('total_chats'));
-        $this->assertEquals(4.0, $response->json('avg_rating'));
+            ->assertJsonStructure(['success', 'data' => ['total_chats', 'avg_rating', 'daily']]);
+        $this->assertEquals(2, $response->json('data.total_chats'));
+        $this->assertEquals(4.0, $response->json('data.avg_rating'));
     }
 
     public function test_get_stats_empty_data(): void
@@ -80,9 +80,9 @@ class StatsTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['total_chats', 'avg_rating', 'daily']);
-        $this->assertEquals(0, $response->json('total_chats'));
-        $this->assertEquals(0, $response->json('avg_rating'));
+            ->assertJsonStructure(['success', 'data' => ['total_chats', 'avg_rating', 'daily']]);
+        $this->assertEquals(0, $response->json('data.total_chats'));
+        $this->assertEquals(0, $response->json('data.avg_rating'));
     }
 
     private function adminLogin(): ?string

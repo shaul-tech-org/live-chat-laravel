@@ -34,9 +34,9 @@ class WidgetConfigTest extends TestCase
         $response = $this->getJson("/api/widget/config?api_key={$apiKey}");
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['widget_config', 'auto_reply_message'])
-            ->assertJsonPath('widget_config.primary_color', '#4F46E5')
-            ->assertJsonPath('auto_reply_message', '현재 영업시간이 아닙니다.');
+            ->assertJsonStructure(['success', 'data' => ['widget_config', 'auto_reply_message']])
+            ->assertJsonPath('data.widget_config.primary_color', '#4F46E5')
+            ->assertJsonPath('data.auto_reply_message', '현재 영업시간이 아닙니다.');
     }
 
     public function test_get_config_with_invalid_key(): void
@@ -77,6 +77,6 @@ class WidgetConfigTest extends TestCase
         $response = $this->getJson("/api/widget/config?api_key={$apiKey}");
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['widget_config', 'auto_reply_message']);
+            ->assertJsonStructure(['success', 'data' => ['widget_config', 'auto_reply_message']]);
     }
 }

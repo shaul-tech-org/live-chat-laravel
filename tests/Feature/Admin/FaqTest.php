@@ -37,8 +37,8 @@ class FaqTest extends TestCase
         ], ['Authorization' => 'Bearer ' . $token]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['id', 'tenant_id', 'keyword', 'answer']);
-        $this->assertEquals('배송', $response->json('keyword'));
+            ->assertJsonStructure(['success', 'data' => ['id', 'tenant_id', 'keyword', 'answer']]);
+        $this->assertEquals('배송', $response->json('data.keyword'));
         $this->assertDatabaseHas('faq_entries', ['keyword' => '배송']);
     }
 
