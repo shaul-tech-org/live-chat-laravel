@@ -80,7 +80,7 @@ REVERB_HOST=your-domain.com
 ### 3. Docker Compose 실행
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 8개 서비스가 기동됩니다:
@@ -96,10 +96,16 @@ docker compose up -d --build
 | mongodb | 문서 DB | 27017 |
 | redis | 캐시/큐/세션 | 6379 |
 
-### 4. APP_KEY 생성 + 데이터베이스 마이그레이션
+### 4. 의존성 설치 + 초기 설정
 
 ```bash
+# Composer 의존성 설치
+docker exec lchat-app composer install --no-dev --optimize-autoloader
+
+# APP_KEY 생성
 docker exec lchat-app php artisan key:generate --force
+
+# 데이터베이스 마이그레이션
 docker exec lchat-app php artisan migrate --force
 ```
 
