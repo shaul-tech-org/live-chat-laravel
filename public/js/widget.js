@@ -143,6 +143,7 @@
             '@media(max-width:639px){\n' +
             '  .lchat-panel{bottom:0;right:0;left:0;top:0;width:100%;height:100dvh;height:calc(var(--lchat-vh,1vh)*100);border-radius:0;}\n' +
             '  .lchat-bubble{bottom:16px;right:16px;}\n' +
+            '  .lchat-textarea,.lchat-prechat input{font-size:16px !important;}\n' +
             '}\n';
 
         document.head.appendChild(style);
@@ -291,7 +292,7 @@
             state.unread = 0;
             updateBadge();
             scrollToBottom(true);
-            textarea.focus();
+            if (window.innerWidth >= 640) textarea.focus();
         } else {
             panel.classList.remove('lchat-open');
         }
@@ -761,7 +762,7 @@
             .then(function () {
                 showChat();
                 loadMessages();
-                textarea.focus();
+                if (window.innerWidth >= 640) textarea.focus();
             })
             .catch(function (err) {
                 logError(err);
