@@ -211,7 +211,10 @@ function chatTab() {
             try {
                 const res = await fetch(`/api/admin/rooms/${room.id}/messages`, { headers: this.authHeaders });
                 const json = await res.json();
-                if (json.success) this.messages = json.data;
+                if (json.success) {
+                    const raw = json.data;
+                    this.messages = Array.isArray(raw) ? raw : (Array.isArray(raw.data) ? raw.data : []);
+                }
                 this.$nextTick(() => {
                     if (this.$refs.messageContainer) {
                         this.$refs.messageContainer.scrollTop = this.$refs.messageContainer.scrollHeight;
