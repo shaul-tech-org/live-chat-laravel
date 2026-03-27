@@ -9,14 +9,22 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health', [Api\HealthController::class, 'index']);
 
 // Widget Config (public — API key validated inside handler)
-Route::get('/widget/config', [Api\WidgetConfigController::class, 'show']);
+Route::middleware('throttle:api')->group(function () {
+    Route::get('/widget/config', [Api\WidgetConfigController::class, 'show']);
+});
 
 // Auth
-Route::post('/auth/login', [Auth\LoginController::class, 'login']);
+Route::middleware('throttle:auth-login')->group(function () {
+    Route::post('/auth/login', [Auth\LoginController::class, 'login']);
+});
 
 // Widget (API Key + XSS middleware)
-Route::middleware(['api.key', 'xss'])->group(function () {
-    Route::post('/rooms', [Api\RoomController::class, 'store']);
+Route::middleware(['api.key', 'xss', 'throttle:api'])->group(function () {
+    // Room creation — stricter limit
+    Route::middleware('throttle:room-creation')->group(function () {
+        Route::post('/rooms', [Api\RoomController::class, 'store']);
+    });
+
     Route::get('/rooms', [Api\RoomController::class, 'visitorRooms']);
     Route::post('/feedbacks', [Api\FeedbackController::class, 'store']);
     Route::post('/upload', [Api\UploadController::class, 'store']);
@@ -24,12 +32,16 @@ Route::middleware(['api.key', 'xss'])->group(function () {
     Route::get('/link-preview', [Api\LinkPreviewController::class, 'show']);
     Route::post('/rooms/{id}/transcript', [Api\TranscriptController::class, 'store']);
 
-    // Messages (Phase 3 — WebSocket)
-    Route::post('/rooms/{id}/messages', [Api\MessageController::class, 'store']);
+    // Messages — dedicated limit
+    Route::middleware('throttle:message-send')->group(function () {
+        Route::post('/rooms/{id}/messages', [Api\MessageController::class, 'store']);
+    });
     Route::get('/rooms/{id}/messages', [Api\MessageController::class, 'index']);
 
-    // Typing indicator
-    Route::post('/rooms/{id}/typing', [Api\TypingController::class, 'store']);
+    // Typing indicator — dedicated limit
+    Route::middleware('throttle:typing-indicator')->group(function () {
+        Route::post('/rooms/{id}/typing', [Api\TypingController::class, 'store']);
+    });
 
     // Reactions
     Route::post('/rooms/{id}/reactions', [Api\ReactionController::class, 'store']);
@@ -41,8 +53,8 @@ Route::middleware(['api.key', 'xss'])->group(function () {
 // Broadcasting auth (custom — API key or bearer token)
 Route::post('/broadcasting/auth', [\App\Http\Controllers\BroadcastAuthController::class, 'authenticate']);
 
-// Admin (Built-in / Keycloak auth + XSS)
-Route::middleware(['admin.auth', 'xss'])->prefix('admin')->group(function () {
+// Admin (Built-in / Keycloak auth + XSS + admin rate limit)
+Route::middleware(['admin.auth', 'xss', 'throttle:admin-api'])->prefix('admin')->group(function () {
     // Rooms
     Route::get('/rooms', [Admin\RoomController::class, 'index']);
     Route::patch('/rooms/{id}', [Admin\RoomController::class, 'update']);
