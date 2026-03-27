@@ -26,4 +26,21 @@ class RoomController extends Controller
 
         return response()->json($room, 201);
     }
+
+    /**
+     * GET /api/rooms?visitor_id=X — 방문자의 채팅방 목록 조회
+     */
+    public function visitorRooms(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'visitor_id' => 'required|string|max:64',
+        ]);
+
+        $rooms = ChatRoom::where('tenant_id', $request->get('tenant_id'))
+            ->where('visitor_id', $validated['visitor_id'])
+            ->orderByDesc('created_at')
+            ->paginate(20);
+
+        return response()->json($rooms);
+    }
 }
