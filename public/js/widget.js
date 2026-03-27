@@ -141,7 +141,7 @@
 
             /* Mobile responsive */
             '@media(max-width:639px){\n' +
-            '  .lchat-panel{bottom:0;right:0;left:0;top:0;width:100%;height:100dvh;height:calc(var(--lchat-vh,1vh)*100);border-radius:0;}\n' +
+            '  .lchat-panel{bottom:0;right:0;left:0;top:0;width:100%;height:100%;border-radius:0;}\n' +
             '  .lchat-bubble{bottom:16px;right:16px;}\n' +
             '  .lchat-textarea,.lchat-prechat input{font-size:16px !important;}\n' +
             '}\n';
@@ -281,6 +281,10 @@
         state.open = !state.open;
         if (state.open) {
             panel.classList.add('lchat-open');
+            if (isMobile()) {
+                document.body.style.overflow = 'hidden';
+                updatePanelLayout();
+            }
             if (state.visitorName && state.roomId) {
                 showChat();
                 loadMessages();
@@ -292,9 +296,13 @@
             state.unread = 0;
             updateBadge();
             scrollToBottom(true);
-            if (window.innerWidth >= 640) textarea.focus();
+            if (!isMobile()) textarea.focus();
         } else {
             panel.classList.remove('lchat-open');
+            if (isMobile()) {
+                document.body.style.overflow = '';
+                resetPanelLayout();
+            }
         }
     }
 
@@ -668,29 +676,44 @@
     }
 
     /* ── Mobile Viewport / Keyboard Handling ────────────────── */
-    function updateViewportHeight() {
-        var vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) * 0.01;
-        document.documentElement.style.setProperty('--lchat-vh', vh + 'px');
+    function isMobile() {
+        return window.innerWidth < 640;
+    }
+
+    function updatePanelLayout() {
+        if (!isMobile() || !state.open) return;
+
+        var vv = window.visualViewport;
+        if (!vv) return;
+
+        /* Position panel to match the visual viewport exactly */
+        panel.style.position = 'fixed';
+        panel.style.top = vv.offsetTop + 'px';
+        panel.style.left = '0';
+        panel.style.right = '0';
+        panel.style.bottom = 'auto';
+        panel.style.height = vv.height + 'px';
+        panel.style.width = '100%';
+    }
+
+    function resetPanelLayout() {
+        panel.style.position = '';
+        panel.style.top = '';
+        panel.style.left = '';
+        panel.style.right = '';
+        panel.style.bottom = '';
+        panel.style.height = '';
+        panel.style.width = '';
     }
 
     function setupMobileKeyboard() {
-        updateViewportHeight();
-
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', function () {
-                updateViewportHeight();
-                /* Ensure input stays visible when keyboard opens */
-                if (state.open && document.activeElement === textarea) {
-                    setTimeout(function () {
-                        textarea.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                        inputArea.scrollIntoView({ block: 'end', behavior: 'smooth' });
-                    }, 100);
-                }
-            });
+            var onViewportChange = function () {
+                updatePanelLayout();
+            };
+            window.visualViewport.addEventListener('resize', onViewportChange);
+            window.visualViewport.addEventListener('scroll', onViewportChange);
         }
-
-        /* Fallback for browsers without visualViewport */
-        window.addEventListener('resize', updateViewportHeight);
     }
 
     /* ── Event Handlers ────────────────────────────────────── */
@@ -730,12 +753,11 @@
             sendTypingIndicator();
         });
 
-        /* Mobile keyboard: scroll input into view on focus */
+        /* Mobile keyboard: reposition panel on focus */
         textarea.addEventListener('focus', function () {
-            if (window.innerWidth < 640) {
-                setTimeout(function () {
-                    inputArea.scrollIntoView({ block: 'end', behavior: 'smooth' });
-                }, 300);
+            if (isMobile()) {
+                setTimeout(updatePanelLayout, 100);
+                setTimeout(updatePanelLayout, 300);
             }
         });
 
