@@ -300,11 +300,14 @@
             panel.classList.add('lchat-open');
             if (isMobile()) {
                 state.savedScrollY = window.scrollY;
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
                 document.body.style.position = 'fixed';
                 document.body.style.top = '-' + state.savedScrollY + 'px';
                 document.body.style.left = '0';
                 document.body.style.right = '0';
-                document.body.style.overflow = 'hidden';
+                document.body.style.width = '100%';
+                document.addEventListener('touchmove', preventBgScroll, { passive: false });
                 backdrop.classList.add('lchat-show');
                 updatePanelLayout();
             }
@@ -323,11 +326,14 @@
         } else {
             panel.classList.remove('lchat-open');
             if (isMobile()) {
+                document.removeEventListener('touchmove', preventBgScroll);
+                document.documentElement.style.overflow = '';
+                document.body.style.overflow = '';
                 document.body.style.position = '';
                 document.body.style.top = '';
                 document.body.style.left = '';
                 document.body.style.right = '';
-                document.body.style.overflow = '';
+                document.body.style.width = '';
                 window.scrollTo(0, state.savedScrollY || 0);
                 backdrop.classList.remove('lchat-show');
                 resetPanelLayout();
@@ -713,6 +719,16 @@
     /* ── Mobile Viewport / Keyboard Handling ────────────────── */
     function isMobile() {
         return window.innerWidth < 640;
+    }
+
+    function preventBgScroll(e) {
+        /* Allow scrolling inside messages area and contenteditable */
+        var el = e.target;
+        while (el && el !== document.body) {
+            if (el === messagesEl || el === textarea) return;
+            el = el.parentElement;
+        }
+        e.preventDefault();
     }
 
     var rafPending = false;
