@@ -127,8 +127,8 @@
             '.lchat-prechat-desc{font-size:14px;color:#6B7280;text-align:center;margin-bottom:20px;}\n' +
             '.lchat-prechat-response{font-size:12px;color:#9CA3AF;margin-bottom:24px;display:flex;align-items:center;gap:4px;}\n' +
             '.lchat-prechat-response::before{content:"";width:6px;height:6px;border-radius:50%;background:#34D399;}\n' +
-            '.lchat-prechat-topics{width:100%;display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}\n' +
-            '.lchat-topic-btn{width:100%;padding:12px 16px;border:1px solid #E5E7EB;border-radius:10px;background:#fff;color:#374151;font-size:14px;font-weight:500;cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;gap:8px;}\n' +
+            '.lchat-prechat-topics{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px;}\n' +
+            '.lchat-topic-btn{padding:10px 6px;border:1px solid #E5E7EB;border-radius:10px;background:#fff;color:#374151;font-size:12px;font-weight:500;cursor:pointer;text-align:center;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px;}\n' +
             '.lchat-topic-btn:hover{border-color:#4F46E5;background:#EEF2FF;color:#4F46E5;}\n' +
             '.lchat-topic-icon{font-size:16px;flex-shrink:0;}\n' +
             '.lchat-prechat-divider{width:100%;text-align:center;color:#9CA3AF;font-size:12px;margin:12px 0;position:relative;}\n' +
