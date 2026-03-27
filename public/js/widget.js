@@ -785,19 +785,22 @@
         return window.innerWidth < 640;
     }
 
+    function isScrollableArea(el) {
+        return el === messagesEl || el === prechatEl;
+    }
+
     function preventBgScroll(e) {
-        /* Allow scrolling inside messages area only */
         var el = e.target;
         while (el && el !== document.body && el !== document.documentElement) {
-            if (el === messagesEl) {
-                /* Allow only if there's actually overflow to scroll */
-                var atTop = messagesEl.scrollTop <= 0;
-                var atBottom = messagesEl.scrollTop + messagesEl.clientHeight >= messagesEl.scrollHeight - 1;
+            if (isScrollableArea(el)) {
+                /* Allow scroll but prevent overscroll at edges */
+                var scrollEl = el;
+                var atTop = scrollEl.scrollTop <= 0;
+                var atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
                 if (e.touches && e.touches.length === 1) {
                     var touch = e.touches[0];
                     var dy = touch.clientY - (state._lastTouchY || touch.clientY);
                     state._lastTouchY = touch.clientY;
-                    /* Block if at edge and trying to scroll further */
                     if ((atTop && dy > 0) || (atBottom && dy < 0)) {
                         e.preventDefault();
                     }
@@ -805,13 +808,11 @@
                 return;
             }
             if (el === panel) {
-                /* Inside panel but not messages — block scroll */
                 e.preventDefault();
                 return;
             }
             el = el.parentElement;
         }
-        /* Outside panel — always block */
         e.preventDefault();
     }
 
@@ -868,6 +869,16 @@
 
         /* Pre-chat form */
         prechatBtn.addEventListener('click', handlePrechat);
+        prechatInput.addEventListener('focus', function () {
+            if (isMobile()) {
+                setTimeout(function () {
+                    prechatInput.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }, 300);
+                setTimeout(function () {
+                    prechatInput.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }, 600);
+            }
+        });
         prechatInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
