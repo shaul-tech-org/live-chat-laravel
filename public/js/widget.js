@@ -86,7 +86,8 @@
             '.lchat-close-btn svg{width:20px;height:20px;fill:#fff;}\n' +
 
             /* Messages area */
-            '.lchat-messages{flex:1;overflow-y:auto;padding:16px;background:#F9FAFB;display:flex;flex-direction:column;gap:8px;}\n' +
+            '.lchat-messages{flex:1;overflow-y:auto;padding:16px;background:#F9FAFB;display:flex;flex-direction:column;gap:8px;scrollbar-width:none;-ms-overflow-style:none;}\n' +
+            '.lchat-messages::-webkit-scrollbar{display:none;}\n' +
             '.lchat-msg{max-width:78%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;word-break:break-word;}\n' +
             '.lchat-msg-visitor{align-self:flex-end;background:#4F46E5;color:#fff;border-bottom-right-radius:4px;}\n' +
             '.lchat-msg-agent{align-self:flex-start;background:#E5E7EB;color:#1F2937;border-bottom-left-radius:4px;}\n' +
@@ -105,7 +106,8 @@
 
             /* Input area */
             '.lchat-input-area{padding:12px;border-top:1px solid #E5E7EB;display:flex;align-items:flex-end;gap:8px;background:#fff;flex-shrink:0;}\n' +
-            '.lchat-textarea{flex:1;resize:none;border:1px solid #D1D5DB;border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.4;max-height:100px;outline:none;background:#fff;color:#1F2937;}\n' +
+            '.lchat-textarea{flex:1;resize:none;border:1px solid #D1D5DB;border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.4;max-height:100px;outline:none;background:#fff;color:#1F2937;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;}\n' +
+            '.lchat-textarea::-webkit-scrollbar{display:none;}\n' +
             '.lchat-textarea:focus{border-color:#4F46E5;box-shadow:0 0 0 2px rgba(79,70,229,.15);}\n' +
             '.lchat-textarea::placeholder{color:#9CA3AF;}\n' +
             '.lchat-send-btn{width:38px;height:38px;border-radius:10px;border:none;background:#4F46E5;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}\n' +
