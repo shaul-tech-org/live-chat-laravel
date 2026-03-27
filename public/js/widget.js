@@ -60,6 +60,7 @@
         style.textContent = '\n' +
             /* Reset & base */
             '.lchat-widget,.lchat-widget *,.lchat-widget *::before,.lchat-widget *::after{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif;}\n' +
+            '.lchat-hidden{display:none !important;}\n' +
 
             /* Bubble */
             '.lchat-bubble{position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;background:#4F46E5;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:999999;box-shadow:0 4px 14px rgba(79,70,229,.45);transition:transform .2s ease,box-shadow .2s ease;}\n' +
@@ -119,12 +120,25 @@
             '.lchat-send-btn svg{width:18px;height:18px;fill:#fff;}\n' +
 
             /* Pre-chat form */
-            '.lchat-prechat{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;gap:16px;background:#F9FAFB;}\n' +
-            '.lchat-prechat-title{font-size:18px;font-weight:600;color:#1F2937;}\n' +
-            '.lchat-prechat-desc{font-size:14px;color:#6B7280;text-align:center;}\n' +
-            '.lchat-prechat input{width:100%;padding:10px 14px;border:1px solid #D1D5DB;border-radius:10px;font-size:14px;outline:none;background:#fff;color:#1F2937;}\n' +
+            '.lchat-prechat{flex:1;display:flex;flex-direction:column;align-items:center;padding:32px 24px;gap:0;background:#F9FAFB;overflow-y:auto;}\n' +
+            '.lchat-prechat-avatar{width:64px;height:64px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;margin-top:24px;margin-bottom:12px;}\n' +
+            '.lchat-prechat-avatar svg{width:32px;height:32px;fill:#4F46E5;}\n' +
+            '.lchat-prechat-title{font-size:20px;font-weight:700;color:#1F2937;margin-bottom:4px;}\n' +
+            '.lchat-prechat-desc{font-size:14px;color:#6B7280;text-align:center;margin-bottom:20px;}\n' +
+            '.lchat-prechat-response{font-size:12px;color:#9CA3AF;margin-bottom:24px;display:flex;align-items:center;gap:4px;}\n' +
+            '.lchat-prechat-response::before{content:"";width:6px;height:6px;border-radius:50%;background:#34D399;}\n' +
+            '.lchat-prechat-topics{width:100%;display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}\n' +
+            '.lchat-topic-btn{width:100%;padding:12px 16px;border:1px solid #E5E7EB;border-radius:10px;background:#fff;color:#374151;font-size:14px;font-weight:500;cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;gap:8px;}\n' +
+            '.lchat-topic-btn:hover{border-color:#4F46E5;background:#EEF2FF;color:#4F46E5;}\n' +
+            '.lchat-topic-icon{font-size:16px;flex-shrink:0;}\n' +
+            '.lchat-prechat-divider{width:100%;text-align:center;color:#9CA3AF;font-size:12px;margin:12px 0;position:relative;}\n' +
+            '.lchat-prechat-divider::before,.lchat-prechat-divider::after{content:"";position:absolute;top:50%;width:calc(50% - 20px);height:1px;background:#E5E7EB;}\n' +
+            '.lchat-prechat-divider::before{left:0;}\n' +
+            '.lchat-prechat-divider::after{right:0;}\n' +
+            '.lchat-prechat-form{width:100%;display:flex;gap:8px;}\n' +
+            '.lchat-prechat input{flex:1;padding:10px 14px;border:1px solid #D1D5DB;border-radius:10px;font-size:14px;outline:none;background:#fff;color:#1F2937;}\n' +
             '.lchat-prechat input:focus{border-color:#4F46E5;box-shadow:0 0 0 2px rgba(79,70,229,.15);}\n' +
-            '.lchat-prechat-btn{width:100%;padding:10px;border:none;border-radius:10px;background:#4F46E5;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s;}\n' +
+            '.lchat-prechat-btn{padding:10px 16px;border:none;border-radius:10px;background:#4F46E5;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap;}\n' +
             '.lchat-prechat-btn:hover{background:#4338CA;}\n' +
             '.lchat-prechat-btn:disabled{background:#A5B4FC;cursor:not-allowed;}\n' +
 
@@ -139,9 +153,14 @@
             '.lchat-dark .lchat-textarea{background:#374151;color:#F3F4F6;border-color:#4B5563;}\n' +
             '.lchat-dark .lchat-textarea::placeholder{color:#6B7280;}\n' +
             '.lchat-dark .lchat-prechat{background:#111827;}\n' +
+            '.lchat-dark .lchat-prechat-avatar{background:#1E1B4B;}\n' +
+            '.lchat-dark .lchat-prechat-avatar svg{fill:#818CF8;}\n' +
             '.lchat-dark .lchat-prechat-title{color:#F3F4F6;}\n' +
             '.lchat-dark .lchat-prechat-desc{color:#9CA3AF;}\n' +
             '.lchat-dark .lchat-prechat input{background:#374151;color:#F3F4F6;border-color:#4B5563;}\n' +
+            '.lchat-dark .lchat-topic-btn{background:#1F2937;color:#D1D5DB;border-color:#374151;}\n' +
+            '.lchat-dark .lchat-topic-btn:hover{background:#1E1B4B;color:#A5B4FC;border-color:#4F46E5;}\n' +
+            '.lchat-dark .lchat-prechat-divider::before,.lchat-dark .lchat-prechat-divider::after{background:#374151;}\n' +
             '.lchat-dark .lchat-header{background:#3730A3;}\n' +
 
             /* Mobile responsive */
@@ -209,27 +228,70 @@
         /* Pre-chat form */
         prechatEl = document.createElement('div');
         prechatEl.className = 'lchat-prechat';
+
+        /* Avatar */
+        var avatar = document.createElement('div');
+        avatar.className = 'lchat-prechat-avatar';
+        avatar.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>';
+        prechatEl.appendChild(avatar);
+
         var prechatTitle = document.createElement('div');
         prechatTitle.className = 'lchat-prechat-title';
-        prechatTitle.textContent = '채팅 시작하기';
+        prechatTitle.textContent = '무엇을 도와드릴까요?';
+        prechatEl.appendChild(prechatTitle);
+
         var prechatDesc = document.createElement('div');
         prechatDesc.className = 'lchat-prechat-desc';
-        prechatDesc.textContent = '이름을 입력하시면 상담이 시작됩니다.';
+        prechatDesc.textContent = '궁금한 점을 선택하거나 이름을 입력해 상담을 시작하세요.';
+        prechatEl.appendChild(prechatDesc);
+
+        /* Response time */
+        var responseHint = document.createElement('div');
+        responseHint.className = 'lchat-prechat-response';
+        responseHint.textContent = '보통 2분 이내 응답';
+        prechatEl.appendChild(responseHint);
+
+        /* Quick topic buttons */
+        var topics = document.createElement('div');
+        topics.className = 'lchat-prechat-topics';
+        var topicList = [
+            { icon: '💬', label: '일반 문의' },
+            { icon: '📋', label: '견적 요청' },
+            { icon: '🛠', label: '기술 지원' },
+        ];
+        topicList.forEach(function (t) {
+            var btn = document.createElement('button');
+            btn.className = 'lchat-topic-btn';
+            btn.innerHTML = '<span class="lchat-topic-icon">' + t.icon + '</span>' + t.label;
+            btn.addEventListener('click', function () {
+                startWithTopic(t.label);
+            });
+            topics.appendChild(btn);
+        });
+        prechatEl.appendChild(topics);
+
+        /* Divider */
+        var divider = document.createElement('div');
+        divider.className = 'lchat-prechat-divider';
+        divider.textContent = '또는';
+        prechatEl.appendChild(divider);
+
+        /* Name input row */
+        var formRow = document.createElement('div');
+        formRow.className = 'lchat-prechat-form';
         prechatInput = document.createElement('input');
         prechatInput.type = 'text';
-        prechatInput.placeholder = '이름을 입력하세요';
+        prechatInput.placeholder = '이름 입력';
         prechatInput.maxLength = 50;
         prechatInput.setAttribute('autocomplete', 'one-time-code');
         prechatInput.setAttribute('enterkeyhint', 'go');
-        prechatInput.setAttribute('data-form-type', 'other');
-        prechatInput.setAttribute('data-lpignore', 'true');
         prechatBtn = document.createElement('button');
         prechatBtn.className = 'lchat-prechat-btn';
-        prechatBtn.textContent = '시작하기';
-        prechatEl.appendChild(prechatTitle);
-        prechatEl.appendChild(prechatDesc);
-        prechatEl.appendChild(prechatInput);
-        prechatEl.appendChild(prechatBtn);
+        prechatBtn.textContent = '시작';
+        formRow.appendChild(prechatInput);
+        formRow.appendChild(prechatBtn);
+        prechatEl.appendChild(formRow);
+
         panel.appendChild(prechatEl);
 
         /* Messages area */
@@ -872,6 +934,39 @@
                 logError(err);
                 appendSystemMsg('연결에 실패했습니다. 다시 시도해주세요.');
                 prechatBtn.disabled = false;
+            });
+    }
+
+    function startWithTopic(topic) {
+        state.visitorName = '방문자';
+        localStorage.setItem(LS_NAME, state.visitorName);
+
+        createRoom()
+            .then(function () {
+                showChat();
+                /* Send topic as first message */
+                var content = topic;
+                fetch(cfg.baseUrl + '/api/rooms/' + state.roomId + '/messages', {
+                    method: 'POST',
+                    headers: apiHeaders(),
+                    body: JSON.stringify({
+                        sender_type: 'visitor',
+                        sender_name: state.visitorName,
+                        content: content,
+                        content_type: 'text',
+                    }),
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (json) {
+                    var msg = json.data || json;
+                    appendMessage(msg);
+                })
+                .catch(logError);
+                loadMessages();
+            })
+            .catch(function (err) {
+                logError(err);
+                appendSystemMsg('연결에 실패했습니다. 다시 시도해주세요.');
             });
     }
 
