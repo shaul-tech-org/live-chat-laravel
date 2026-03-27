@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public
 Route::get('/health', [Api\HealthController::class, 'index']);
+Route::get('/metrics', [Api\MetricsController::class, 'index']);
 
 // Widget Config (public — API key validated inside handler)
 Route::middleware('throttle:api')->group(function () {
