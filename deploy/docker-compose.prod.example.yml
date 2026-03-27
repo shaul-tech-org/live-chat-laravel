@@ -1,0 +1,220 @@
+name: live-chat
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "3"
+
+services:
+  # ===========================
+  # Nginx — Reverse Proxy (HTTP + WSS)
+  # ===========================
+  nginx:
+    image: registry.shaul.kr/livechat/nginx:1.0.5
+    container_name: lchat-nginx
+    ports:
+      - "${APP_PORT:-8098}:80"
+    volumes:
+      - ./public/js:/var/www/html/public/js:ro
+    depends_on:
+      - app
+      - reverb
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          memory: 128M
+    networks:
+      - lchat
+
+  # ===========================
+  # PHP-FPM — Laravel Application
+  # ===========================
+  app:
+    image: registry.shaul.kr/livechat/app:1.0.6
+    container_name: lchat-app
+    volumes:
+      - storage:/var/www/html/storage
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          memory: 256M
+    networks:
+      - lchat
+
+  # ===========================
+  # Reverb — WebSocket Server
+  # ===========================
+  reverb:
+    image: registry.shaul.kr/livechat/app:1.0.6
+    container_name: lchat-reverb
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    env_file: .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          memory: 128M
+    networks:
+      - lchat
+
+  # ===========================
+  # Queue Worker — Event Processing
+  # ===========================
+  worker:
+    image: registry.shaul.kr/livechat/app:1.0.6
+    container_name: lchat-worker
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    env_file: .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          memory: 128M
+    networks:
+      - lchat
+
+  # ===========================
+  # Scheduler — Cron Tasks
+  # ===========================
+  scheduler:
+    image: registry.shaul.kr/livechat/app:1.0.6
+    container_name: lchat-scheduler
+    command: sh -c "while true; do php artisan schedule:run --no-interaction; sleep 60; done"
+    env_file: .env
+    depends_on:
+      - app
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          memory: 64M
+    networks:
+      - lchat
+
+  # ===========================
+  # PostgreSQL 18
+  # ===========================
+  postgres:
+    image: postgres:18-alpine
+    container_name: lchat-postgres
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-chatuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: ${DB_DATABASE:-live_chat}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-chatuser} -d ${DB_DATABASE:-live_chat}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          memory: 256M
+    networks:
+      - lchat
+
+  # ===========================
+  # MongoDB 8
+  # ===========================
+  mongodb:
+    image: mongo:8
+    container_name: lchat-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-chatuser}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-changeme}
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "-u", "${MONGO_USERNAME:-chatuser}", "-p", "${MONGO_PASSWORD:-changeme}", "--authenticationDatabase", "admin"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          memory: 256M
+    networks:
+      - lchat
+
+  # ===========================
+  # Redis 8
+  # ===========================
+  redis:
+    image: redis:8-alpine
+    container_name: lchat-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          memory: 128M
+    networks:
+      - lchat
+
+volumes:
+  storage:
+  postgres-data:
+  mongodb-data:
+  redis-data:
+
+networks:
+  lchat:
+    driver: bridge

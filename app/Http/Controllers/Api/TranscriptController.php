@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\RequestTranscriptRequest;
 use App\Http\Responses\ApiResponse;
+use App\Mail\TranscriptMail;
+use App\Models\Mongo\Message;
 use App\Services\RoomService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Mail;
 
 class TranscriptController extends Controller
 {
@@ -17,6 +20,13 @@ class TranscriptController extends Controller
     public function store(RequestTranscriptRequest $request, string $id): JsonResponse
     {
         $room = $this->roomService->findForTenant($id, $request->get('tenant_id'));
+
+        $messages = Message::where('room_id', $room->id)
+            ->orderBy('created_at')
+            ->get();
+
+        Mail::to($request->validated('email'))
+            ->queue(new TranscriptMail($room, $messages));
 
         return ApiResponse::success([
             'room_id' => $room->id,
