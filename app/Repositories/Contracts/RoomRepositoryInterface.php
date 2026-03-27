@@ -16,7 +16,7 @@ interface RoomRepositoryInterface
 
     public function listByVisitor(string $tenantId, string $visitorId, int $perPage = 20): LengthAwarePaginator;
 
-    public function listAll(int $perPage = 20): LengthAwarePaginator;
+    public function listAll(int $perPage = 20, string $sort = 'newest'): LengthAwarePaginator;
 
     public function updateStatus(ChatRoom $room, string $status): ChatRoom;
 

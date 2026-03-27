@@ -1,6 +1,19 @@
 <div x-data="chatTab()" class="flex h-full">
     <div class="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 shrink-0">
         <div class="p-3 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    채팅 목록 <span class="text-xs text-gray-400" x-text="'(' + totalRooms + '개)'"></span>
+                </span>
+                <select
+                    x-model="sort"
+                    @change="changeSort()"
+                    class="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-blue-500"
+                >
+                    <option value="newest">최신순</option>
+                    <option value="activity">최근 활동순</option>
+                </select>
+            </div>
             <input
                 type="text"
                 x-model="search"
@@ -54,8 +67,19 @@
                     </div>
                 </div>
             </template>
-            <div x-show="filteredRooms.length === 0" class="p-4 text-center text-sm text-gray-400">
+            <div x-show="filteredRooms.length === 0 && !loadingMore" class="p-4 text-center text-sm text-gray-400">
                 채팅방이 없습니다
+            </div>
+            <div x-show="loadingMore" class="p-3 text-center">
+                <span class="text-xs text-gray-400">불러오는 중...</span>
+            </div>
+            <div x-show="hasMorePages && !loadingMore" class="p-3">
+                <button
+                    @click="loadMoreRooms()"
+                    class="w-full py-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-colors"
+                >
+                    더 보기 (<span x-text="rooms.length"></span> / <span x-text="totalRooms"></span>)
+                </button>
             </div>
         </div>
     </div>
@@ -115,6 +139,7 @@
                         <textarea
                             x-model="newMessage"
                             @keydown.enter.prevent="sendMessage()"
+                            @input="emitTyping()"
                             placeholder="메시지를 입력하세요..."
                             rows="1"
                             class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-[16px] resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -140,6 +165,16 @@ function chatTab() {
         newMessage: '',
         filter: 'all',
         search: '',
+        sort: 'newest',
+        currentPage: 1,
+        lastPage: 1,
+        totalRooms: 0,
+        loadingMore: false,
+        perPage: 20,
+
+        get hasMorePages() {
+            return this.currentPage < this.lastPage;
+        },
 
         get authHeaders() {
             return {
@@ -165,20 +200,61 @@ function chatTab() {
 
         typingUser: null,
         typingTimeout: null,
+        adminTypingTimeout: null,
+        lastAdminTypingSent: 0,
 
         async init() {
-            try {
-                const res = await fetch('/api/admin/rooms', { headers: this.authHeaders });
-                const json = await res.json();
-                if (json.success) this.rooms = json.data;
-            } catch (e) {}
+            await this.fetchRooms(1);
             this.initEcho();
         },
 
-        initEcho() {
+        async fetchRooms(page) {
+            try {
+                const params = new URLSearchParams({
+                    page: page,
+                    per_page: this.perPage,
+                    sort: this.sort,
+                });
+                const res = await fetch(`/api/admin/rooms?${params}`, { headers: this.authHeaders });
+                const json = await res.json();
+                if (json.success) {
+                    if (page === 1) {
+                        this.rooms = json.data;
+                    } else {
+                        const existingIds = new Set(this.rooms.map(r => r.id));
+                        const newRooms = json.data.filter(r => !existingIds.has(r.id));
+                        this.rooms = [...this.rooms, ...newRooms];
+                    }
+                    if (json.meta) {
+                        this.currentPage = json.meta.current_page || page;
+                        this.lastPage = json.meta.last_page || 1;
+                        this.totalRooms = json.meta.total || this.rooms.length;
+                    }
+                }
+            } catch (e) {}
+        },
+
+        async loadMoreRooms() {
+            if (this.loadingMore || !this.hasMorePages) return;
+            this.loadingMore = true;
+            await this.fetchRooms(this.currentPage + 1);
+            this.loadingMore = false;
+            this.subscribeNewRooms();
+        },
+
+        async changeSort() {
+            this.currentPage = 1;
+            this.rooms = [];
+            await this.fetchRooms(1);
+            this.subscribeNewRooms();
+        },
+
+        subscribeNewRooms() {
             if (!window.Echo) return;
             this.rooms.forEach(room => {
-                window.Echo.private('chat.' + room.id)
+                const channelName = 'chat.' + room.id;
+                if (window.Echo.connector?.channels?.[`private-${channelName}`]) return;
+                window.Echo.private(channelName)
                     .listen('.message.sent', (e) => {
                         if (this.selectedRoom && this.selectedRoom.id === e.room_id) {
                             if (!this.messages.find(m => m.id === e.id)) {
@@ -204,6 +280,10 @@ function chatTab() {
                         }
                     });
             });
+        },
+
+        initEcho() {
+            this.subscribeNewRooms();
         },
 
         async selectRoom(room) {
@@ -246,6 +326,18 @@ function chatTab() {
                     });
                 }
             } catch (e) {}
+        },
+
+        emitTyping() {
+            if (!this.selectedRoom) return;
+            const now = Date.now();
+            if (now - this.lastAdminTypingSent < 2000) return;
+            this.lastAdminTypingSent = now;
+            fetch(`/api/admin/rooms/${this.selectedRoom.id}/typing`, {
+                method: 'POST',
+                headers: this.authHeaders,
+                body: JSON.stringify({ sender_name: '상담사' }),
+            }).catch(() => {});
         },
 
         formatTime(dateStr) {

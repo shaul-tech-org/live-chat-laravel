@@ -24,7 +24,9 @@ return new class extends Migration
             $table->index('tenant_id');
             $table->unique(['tenant_id', 'user_id']);
         });
-        DB::statement("COMMENT ON TABLE agents IS '상담원 — 테넌트별 채팅 응대 담당자'");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("COMMENT ON TABLE agents IS '상담원 — 테넌트별 채팅 응대 담당자'");
+        }
     }
 
     public function down(): void

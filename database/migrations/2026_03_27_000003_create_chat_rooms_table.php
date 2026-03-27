@@ -24,7 +24,9 @@ return new class extends Migration
             $table->index('visitor_id');
             $table->index('assigned_agent_id');
         });
-        DB::statement("COMMENT ON TABLE chat_rooms IS '채팅방 — 방문자와 상담원 간 대화 세션'");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("COMMENT ON TABLE chat_rooms IS '채팅방 — 방문자와 상담원 간 대화 세션'");
+        }
     }
 
     public function down(): void

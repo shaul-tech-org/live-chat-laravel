@@ -40,13 +40,18 @@ class MessageControllerTest extends TestCase
 
     protected function tearDown(): void
     {
-        // Clean up MongoDB test data
-        Message::where('room_id', $this->room->id)->forceDelete();
+        try {
+            // Clean up MongoDB test data
+            Message::where('room_id', $this->room->id)->forceDelete();
+        } catch (\MongoDB\Driver\Exception\ConnectionTimeoutException $e) {
+            // MongoDB 미연결 환경 — 무시
+        }
         parent::tearDown();
     }
 
     public function test_send_message_success(): void
     {
+        $this->skipIfNoMongo();
         Event::fake([MessageSent::class]);
 
         $response = $this->postJson(
@@ -126,6 +131,7 @@ class MessageControllerTest extends TestCase
 
     public function test_get_message_history(): void
     {
+        $this->skipIfNoMongo();
         // Insert test messages into MongoDB
         Message::create([
             'room_id' => $this->room->id,
@@ -171,6 +177,7 @@ class MessageControllerTest extends TestCase
 
     public function test_get_message_history_with_limit(): void
     {
+        $this->skipIfNoMongo();
         for ($i = 0; $i < 5; $i++) {
             Message::create([
                 'room_id' => $this->room->id,
@@ -207,6 +214,7 @@ class MessageControllerTest extends TestCase
 
     public function test_send_message_with_file_url(): void
     {
+        $this->skipIfNoMongo();
         Event::fake([MessageSent::class]);
 
         $response = $this->postJson(
@@ -227,6 +235,7 @@ class MessageControllerTest extends TestCase
 
     public function test_send_message_triggers_faq_auto_reply(): void
     {
+        $this->skipIfNoMongo();
         Event::fake([MessageSent::class]);
 
         // Create FAQ entry

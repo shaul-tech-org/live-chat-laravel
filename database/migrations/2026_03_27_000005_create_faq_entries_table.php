@@ -20,7 +20,9 @@ return new class extends Migration
             $table->index('tenant_id');
             $table->index(['tenant_id', 'keyword']);
         });
-        DB::statement("COMMENT ON TABLE faq_entries IS 'FAQ 자동 응답 — 키워드 매칭 시 자동 답변 전송'");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("COMMENT ON TABLE faq_entries IS 'FAQ 자동 응답 — 키워드 매칭 시 자동 답변 전송'");
+        }
     }
 
     public function down(): void

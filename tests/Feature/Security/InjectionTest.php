@@ -52,6 +52,7 @@ class InjectionTest extends TestCase
 
     public function test_nosql_injection_in_message_content(): void
     {
+        $this->skipIfNoMongo();
         $nosqlPayload = '{"$gt":""}';
 
         $response = $this->postJson(

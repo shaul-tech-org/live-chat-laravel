@@ -61,6 +61,7 @@ Route::middleware(['admin.auth', 'xss', 'throttle:admin-api'])->prefix('admin')-
     Route::post('/rooms/{id}/read', [Admin\RoomController::class, 'markRead']);
     Route::get('/rooms/{id}/messages', [Admin\RoomController::class, 'messages']);
     Route::post('/rooms/{id}/messages', [Admin\RoomController::class, 'sendMessage']);
+    Route::post('/rooms/{id}/typing', [Admin\RoomController::class, 'sendTyping']);
 
     // Tenants
     Route::get('/tenants', [Admin\TenantController::class, 'index']);

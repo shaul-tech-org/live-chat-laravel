@@ -45,9 +45,9 @@ class RoomService
         return $this->roomRepo->listByVisitor($tenantId, $visitorId, $perPage);
     }
 
-    public function listAll(int $perPage = 20): LengthAwarePaginator
+    public function listAll(int $perPage = 20, string $sort = 'newest'): LengthAwarePaginator
     {
-        return $this->roomRepo->listAll($perPage);
+        return $this->roomRepo->listAll($perPage, $sort);
     }
 
     public function updateStatus(string $id, string $status): ChatRoom

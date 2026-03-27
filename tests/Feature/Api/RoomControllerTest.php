@@ -112,6 +112,83 @@ class RoomControllerTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_admin_list_rooms_with_pagination(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            ChatRoom::create([
+                'tenant_id' => $this->tenant->id,
+                'visitor_id' => 'v_page_' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'visitor_name' => '방문자' . $i,
+                'status' => 'open',
+            ]);
+        }
+
+        $token = $this->adminLogin();
+        if (!$token) {
+            $this->markTestSkipped('Built-in auth not configured');
+        }
+
+        $response = $this->getJson('/api/admin/rooms?per_page=2&page=1', [
+            'Authorization' => 'Bearer ' . $token,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.per_page', 2);
+    }
+
+    public function test_admin_list_rooms_with_sort_activity(): void
+    {
+        $room1 = ChatRoom::create([
+            'tenant_id' => $this->tenant->id,
+            'visitor_id' => 'v_sort_0001',
+            'visitor_name' => '먼저생성',
+            'status' => 'open',
+        ]);
+
+        $room2 = ChatRoom::create([
+            'tenant_id' => $this->tenant->id,
+            'visitor_id' => 'v_sort_0002',
+            'visitor_name' => '나중생성',
+            'status' => 'open',
+        ]);
+
+        // Touch room1 to make its updated_at more recent
+        $room1->touch();
+
+        $token = $this->adminLogin();
+        if (!$token) {
+            $this->markTestSkipped('Built-in auth not configured');
+        }
+
+        $response = $this->getJson('/api/admin/rooms?sort=activity', [
+            'Authorization' => 'Bearer ' . $token,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $data = $response->json('data');
+        $this->assertEquals($room1->id, $data[0]['id']);
+    }
+
+    public function test_admin_list_rooms_per_page_max_capped_at_50(): void
+    {
+        $token = $this->adminLogin();
+        if (!$token) {
+            $this->markTestSkipped('Built-in auth not configured');
+        }
+
+        $response = $this->getJson('/api/admin/rooms?per_page=100', [
+            'Authorization' => 'Bearer ' . $token,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('meta.per_page', 50);
+    }
+
     // --- Admin\RoomController: update (close) ---
 
     public function test_admin_close_room(): void
@@ -178,6 +255,7 @@ class RoomControllerTest extends TestCase
 
     public function test_admin_mark_read_returns_todo(): void
     {
+        $this->skipIfNoMongo();
         $room = ChatRoom::create([
             'tenant_id' => $this->tenant->id,
             'visitor_id' => 'v_read0001',
@@ -202,6 +280,7 @@ class RoomControllerTest extends TestCase
 
     public function test_admin_messages_returns_todo(): void
     {
+        $this->skipIfNoMongo();
         $room = ChatRoom::create([
             'tenant_id' => $this->tenant->id,
             'visitor_id' => 'v_msg00001',

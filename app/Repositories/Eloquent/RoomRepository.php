@@ -38,10 +38,16 @@ class RoomRepository implements RoomRepositoryInterface
             ->paginate($perPage);
     }
 
-    public function listAll(int $perPage = 20): LengthAwarePaginator
+    public function listAll(int $perPage = 20, string $sort = 'newest'): LengthAwarePaginator
     {
-        return ChatRoom::orderByDesc('created_at')
-            ->paginate($perPage);
+        $query = ChatRoom::query();
+
+        $query = match ($sort) {
+            'activity' => $query->orderByDesc('updated_at'),
+            default => $query->orderByDesc('created_at'),
+        };
+
+        return $query->paginate($perPage);
     }
 
     public function updateStatus(ChatRoom $room, string $status): ChatRoom

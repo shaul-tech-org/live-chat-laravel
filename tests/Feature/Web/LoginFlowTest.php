@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Web;
 
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Tests\TestCase;
 
 class LoginFlowTest extends TestCase
@@ -9,6 +10,7 @@ class LoginFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutMiddleware(ValidateCsrfToken::class);
 
         config([
             'chat.admin_email' => 'admin@test.com',

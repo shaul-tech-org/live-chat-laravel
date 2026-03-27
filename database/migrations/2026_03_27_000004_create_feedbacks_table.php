@@ -22,7 +22,9 @@ return new class extends Migration
             $table->index(['tenant_id', 'created_at']);
             $table->index('room_id');
         });
-        DB::statement("COMMENT ON TABLE feedbacks IS '피드백 — 채팅 종료 후 방문자 만족도 조사'");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("COMMENT ON TABLE feedbacks IS '피드백 — 채팅 종료 후 방문자 만족도 조사'");
+        }
     }
 
     public function down(): void

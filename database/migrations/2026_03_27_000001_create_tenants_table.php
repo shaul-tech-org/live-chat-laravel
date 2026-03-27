@@ -24,7 +24,9 @@ return new class extends Migration
             $table->index('domain');
             $table->index('is_active');
         });
-        DB::statement("COMMENT ON TABLE tenants IS '테넌트 — 멀티테넌트 SaaS의 사이트 단위'");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("COMMENT ON TABLE tenants IS '테넌트 — 멀티테넌트 SaaS의 사이트 단위'");
+        }
     }
 
     public function down(): void

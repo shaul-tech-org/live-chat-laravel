@@ -38,6 +38,7 @@ class XssTest extends TestCase
 
     public function test_script_tag_in_message_is_escaped(): void
     {
+        $this->skipIfNoMongo();
         $xssPayload = '<script>alert(1)</script>';
 
         $response = $this->postJson(
@@ -59,6 +60,7 @@ class XssTest extends TestCase
 
     public function test_img_onerror_in_message_is_escaped(): void
     {
+        $this->skipIfNoMongo();
         $xssPayload = '<img onerror=alert(1)>';
 
         $response = $this->postJson(

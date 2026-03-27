@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\TypingStarted;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateRoomRequest;
 use App\Http\Resources\MessageResource;
@@ -21,9 +22,12 @@ class RoomController extends Controller
         private readonly MessageRepositoryInterface $messageRepo,
     ) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $rooms = $this->roomService->listAll();
+        $perPage = min((int) $request->query('per_page', 20), 50);
+        $sort = $request->query('sort', 'newest');
+
+        $rooms = $this->roomService->listAll($perPage, $sort);
 
         return ApiResponse::paginated(RoomResource::collection($rooms));
     }
@@ -64,6 +68,23 @@ class RoomController extends Controller
         ]);
 
         return ApiResponse::success(new MessageResource($message));
+    }
+
+    public function sendTyping(Request $request, string $id): JsonResponse
+    {
+        $room = $this->roomService->findOrFail($id);
+
+        $validated = $request->validate([
+            'sender_name' => 'nullable|string|max:100',
+        ]);
+
+        broadcast(new TypingStarted(
+            room_id: $room->id,
+            sender_type: 'agent',
+            sender_name: $validated['sender_name'] ?? '상담사',
+        ))->toOthers();
+
+        return ApiResponse::success(['status' => 'ok']);
     }
 
     public function messages(Request $request, string $id): JsonResponse

@@ -81,6 +81,7 @@ class ChatTabTest extends TestCase
 
     public function test_admin_can_send_message_to_room(): void
     {
+        $this->skipIfNoMongo();
         $room = ChatRoom::create([
             'tenant_id' => $this->tenant->id,
             'visitor_id' => 'v_test2',
