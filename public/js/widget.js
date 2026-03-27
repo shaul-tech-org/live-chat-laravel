@@ -209,6 +209,8 @@
         prechatInput.type = 'text';
         prechatInput.placeholder = '이름을 입력하세요';
         prechatInput.maxLength = 50;
+        prechatInput.setAttribute('autocomplete', 'off');
+        prechatInput.setAttribute('enterkeyhint', 'go');
         prechatBtn = document.createElement('button');
         prechatBtn.className = 'lchat-prechat-btn';
         prechatBtn.textContent = '시작하기';
@@ -240,6 +242,11 @@
         textarea.className = 'lchat-textarea';
         textarea.placeholder = '메시지를 입력하세요...';
         textarea.rows = 1;
+        textarea.setAttribute('autocomplete', 'off');
+        textarea.setAttribute('autocorrect', 'off');
+        textarea.setAttribute('autocapitalize', 'off');
+        textarea.setAttribute('spellcheck', 'false');
+        textarea.setAttribute('enterkeyhint', 'send');
         sendBtn = document.createElement('button');
         sendBtn.className = 'lchat-send-btn';
         sendBtn.innerHTML = ICON_SEND;
@@ -680,6 +687,8 @@
         return window.innerWidth < 640;
     }
 
+    var rafPending = false;
+
     function updatePanelLayout() {
         if (!isMobile() || !state.open) return;
 
@@ -687,32 +696,28 @@
         if (!vv) return;
 
         /* Position panel to match the visual viewport exactly */
-        panel.style.position = 'fixed';
-        panel.style.top = vv.offsetTop + 'px';
-        panel.style.left = '0';
-        panel.style.right = '0';
-        panel.style.bottom = 'auto';
-        panel.style.height = vv.height + 'px';
-        panel.style.width = '100%';
+        var top = vv.offsetTop;
+        var h = vv.height;
+        panel.style.cssText = 'position:fixed;top:' + top + 'px;left:0;right:0;bottom:auto;height:' + h + 'px;width:100%;border-radius:0;transition:none;';
     }
 
     function resetPanelLayout() {
-        panel.style.position = '';
-        panel.style.top = '';
-        panel.style.left = '';
-        panel.style.right = '';
-        panel.style.bottom = '';
-        panel.style.height = '';
-        panel.style.width = '';
+        panel.style.cssText = '';
+    }
+
+    function scheduleLayout() {
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(function () {
+            rafPending = false;
+            updatePanelLayout();
+        });
     }
 
     function setupMobileKeyboard() {
         if (window.visualViewport) {
-            var onViewportChange = function () {
-                updatePanelLayout();
-            };
-            window.visualViewport.addEventListener('resize', onViewportChange);
-            window.visualViewport.addEventListener('scroll', onViewportChange);
+            window.visualViewport.addEventListener('resize', scheduleLayout);
+            window.visualViewport.addEventListener('scroll', scheduleLayout);
         }
     }
 
@@ -756,8 +761,7 @@
         /* Mobile keyboard: reposition panel on focus */
         textarea.addEventListener('focus', function () {
             if (isMobile()) {
-                setTimeout(updatePanelLayout, 100);
-                setTimeout(updatePanelLayout, 300);
+                setTimeout(scheduleLayout, 100);
             }
         });
 
