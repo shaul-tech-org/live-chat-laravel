@@ -73,6 +73,8 @@
             '.lchat-bubble-pulse{animation:lchat-pulse .8s ease-out;}\n' +
 
             /* Panel */
+            '.lchat-backdrop{display:none;position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:200vh;background:#000;z-index:999998;}\n' +
+            '.lchat-backdrop.lchat-show{display:block;}\n' +
             '.lchat-panel{position:fixed;bottom:96px;right:24px;width:380px;height:520px;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.18);z-index:999999;display:flex;flex-direction:column;overflow:hidden;transform:translateY(20px);opacity:0;transition:transform .25s ease,opacity .25s ease;pointer-events:none;}\n' +
             '.lchat-panel.lchat-open{transform:translateY(0);opacity:1;pointer-events:auto;}\n' +
 
@@ -157,7 +159,7 @@
     var ICON_SEND = '<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
 
     /* ── DOM Construction ───────────────────────────────────── */
-    var root, bubble, badge, panel, header, messagesEl, typingEl, inputArea, textarea, sendBtn, prechatEl, prechatInput, prechatBtn;
+    var root, bubble, badge, panel, backdrop, header, messagesEl, typingEl, inputArea, textarea, sendBtn, prechatEl, prechatInput, prechatBtn;
 
     function buildDOM() {
         root = document.createElement('div');
@@ -173,6 +175,11 @@
         badge.textContent = '0';
         bubble.appendChild(badge);
         root.appendChild(bubble);
+
+        /* Backdrop (mobile: covers background behind keyboard) */
+        backdrop = document.createElement('div');
+        backdrop.className = 'lchat-backdrop';
+        root.appendChild(backdrop);
 
         /* Panel */
         panel = document.createElement('div');
@@ -297,6 +304,7 @@
             panel.classList.add('lchat-open');
             if (isMobile()) {
                 document.body.style.overflow = 'hidden';
+                backdrop.classList.add('lchat-show');
                 updatePanelLayout();
             }
             if (state.visitorName && state.roomId) {
@@ -315,6 +323,7 @@
             panel.classList.remove('lchat-open');
             if (isMobile()) {
                 document.body.style.overflow = '';
+                backdrop.classList.remove('lchat-show');
                 resetPanelLayout();
             }
         }
