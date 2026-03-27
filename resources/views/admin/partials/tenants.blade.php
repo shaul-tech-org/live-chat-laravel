@@ -1,4 +1,17 @@
 <div x-data="tenantsTab()" x-cloak>
+    {{-- Success Toast --}}
+    <div
+        x-show="toast"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-2"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 translate-y-2"
+        class="fixed bottom-4 right-4 z-50 px-4 py-2 bg-green-600 text-white text-sm rounded-lg shadow-lg"
+        x-text="toast"
+    ></div>
+
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-bold">테넌트 관리</h2>
         <button @click="showCreate = !showCreate" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">
@@ -8,6 +21,10 @@
 
     <div x-show="showCreate" x-cloak class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
         <h3 class="font-medium mb-3">테넌트 생성</h3>
+        {{-- General Error --}}
+        <div x-show="errors.general" class="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p class="text-red-600 dark:text-red-400 text-sm" x-text="errors.general"></p>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
                 <label class="block text-sm font-medium mb-1">이름 <span class="text-red-500">*</span></label>
@@ -15,8 +32,10 @@
                     type="text"
                     x-model="form.name"
                     placeholder="테넌트 이름"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-[16px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    :class="errors.name ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500'"
+                    class="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-[16px] focus:ring-2"
                 >
+                <div x-show="errors.name" class="text-red-500 text-xs mt-1" x-text="errors.name"></div>
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1">도메인</label>
@@ -24,8 +43,10 @@
                     type="text"
                     x-model="form.domain"
                     placeholder="example.com"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-[16px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    :class="errors.domain ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500'"
+                    class="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-[16px] focus:ring-2"
                 >
+                <div x-show="errors.domain" class="text-red-500 text-xs mt-1" x-text="errors.domain"></div>
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1">소유자 ID <span class="text-red-500">*</span></label>
@@ -33,16 +54,25 @@
                     type="text"
                     x-model="form.owner_id"
                     placeholder="소유자 ID"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-[16px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    :class="errors.owner_id ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500'"
+                    class="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-[16px] focus:ring-2"
                 >
+                <div x-show="errors.owner_id" class="text-red-500 text-xs mt-1" x-text="errors.owner_id"></div>
             </div>
         </div>
         <div class="mt-3 flex justify-end">
             <button
                 @click="createTenant()"
-                :disabled="!form.name || !form.owner_id"
-                class="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white text-sm rounded-lg transition-colors"
-            >생성</button>
+                :disabled="!form.name || !form.owner_id || loading"
+                class="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white text-sm rounded-lg transition-colors inline-flex items-center gap-2"
+            >
+                <svg x-show="loading" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span x-show="!loading">생성</span>
+                <span x-show="loading">처리중...</span>
+            </button>
         </div>
     </div>
 
@@ -85,8 +115,15 @@
                             <td class="px-4 py-3 text-center">
                                 <button
                                     @click="rotateKey(tenant.id)"
-                                    class="px-3 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded transition-colors"
-                                >키 재발급</button>
+                                    :disabled="rotatingKey === tenant.id"
+                                    class="px-3 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded transition-colors inline-flex items-center gap-1"
+                                >
+                                    <svg x-show="rotatingKey === tenant.id" class="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span x-text="rotatingKey === tenant.id ? '처리중...' : '키 재발급'"></span>
+                                </button>
                             </td>
                         </tr>
                     </template>
@@ -104,6 +141,10 @@ function tenantsTab() {
     return {
         tenants: [],
         showCreate: false,
+        loading: false,
+        rotatingKey: null,
+        errors: {},
+        toast: '',
         form: { name: '', domain: '', owner_id: '' },
 
         get authHeaders() {
@@ -112,6 +153,11 @@ function tenantsTab() {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             };
+        },
+
+        showToast(message) {
+            this.toast = message;
+            setTimeout(() => { this.toast = ''; }, 2000);
         },
 
         async init() {
@@ -124,6 +170,8 @@ function tenantsTab() {
 
         async createTenant() {
             if (!this.form.name || !this.form.owner_id) return;
+            this.loading = true;
+            this.errors = {};
             try {
                 const res = await fetch('/api/admin/tenants', {
                     method: 'POST',
@@ -131,27 +179,46 @@ function tenantsTab() {
                     body: JSON.stringify(this.form),
                 });
                 const json = await res.json();
+                if (!res.ok) {
+                    this.errors = json.errors || { general: json.message || '생성에 실패했습니다.' };
+                    return;
+                }
                 if (json.success) {
                     this.tenants.push(json.data);
                     this.form = { name: '', domain: '', owner_id: '' };
                     this.showCreate = false;
+                    this.showToast('저장됨');
                 }
-            } catch (e) {}
+            } catch (e) {
+                this.errors = { general: '저장에 실패했습니다.' };
+            } finally {
+                this.loading = false;
+            }
         },
 
         async rotateKey(id) {
             if (!confirm('API 키를 재발급하시겠습니까? 기존 키는 더 이상 사용할 수 없습니다.')) return;
+            this.rotatingKey = id;
             try {
                 const res = await fetch(`/api/admin/tenants/${id}/rotate-key`, {
                     method: 'POST',
                     headers: this.authHeaders,
                 });
                 const json = await res.json();
+                if (!res.ok) {
+                    alert(json.message || '키 재발급에 실패했습니다.');
+                    return;
+                }
                 if (json.success) {
                     const idx = this.tenants.findIndex(t => t.id === id);
                     if (idx !== -1) this.tenants[idx] = json.data;
+                    this.showToast('키가 재발급되었습니다');
                 }
-            } catch (e) {}
+            } catch (e) {
+                alert('키 재발급에 실패했습니다.');
+            } finally {
+                this.rotatingKey = null;
+            }
         },
 
         maskKey(key) {
