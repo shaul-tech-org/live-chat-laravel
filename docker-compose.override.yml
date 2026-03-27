@@ -1,0 +1,7 @@
+# 테스트 실행을 위한 오버라이드 — 호스트 소스 마운트
+services:
+  app:
+    volumes:
+      - ./tests:/var/www/html/tests:ro
+      - ./phpunit.xml:/var/www/html/phpunit.xml:ro
+      - ./.env.testing:/var/www/html/.env.testing:ro

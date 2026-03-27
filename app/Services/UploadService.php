@@ -16,7 +16,7 @@ class UploadService
             'file_url' => $url,
             'file_name' => $file->getClientOriginalName(),
             'file_size' => $file->getSize(),
-            'mime_type' => $file->getClientMimeType(),
+            'mime_type' => $file->getMimeType(),
         ];
     }
 }
