@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class AdminAuth
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        $token = $request->bearerToken() ?? $request->cookie('shaul_access_token');
+
+        if (!$token) {
+            return response()->json(['error' => ['code' => 'UNAUTHORIZED', 'message' => '인증이 필요합니다.']], 401);
+        }
+
+        // Try built-in auth
+        $builtinAuth = app(\App\Services\BuiltinAuthService::class);
+        if ($builtinAuth->isEnabled()) {
+            $user = $builtinAuth->verify($token);
+            if ($user) {
+                $request->merge(['auth_user' => $user]);
+                return $next($request);
+            }
+        }
+
+        // TODO: Keycloak fallback (LCHAT-11)
+
+        return response()->json(['error' => ['code' => 'UNAUTHORIZED', 'message' => '유효하지 않은 토큰입니다.']], 401);
+    }
+}
