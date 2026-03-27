@@ -249,6 +249,9 @@
         textarea.setAttribute('autocapitalize', 'off');
         textarea.setAttribute('spellcheck', 'false');
         textarea.setAttribute('enterkeyhint', 'send');
+        textarea.setAttribute('data-form-type', 'other');
+        textarea.setAttribute('data-lpignore', 'true');
+        textarea.setAttribute('name', 'lchat-msg-' + Date.now());
         sendBtn = document.createElement('button');
         sendBtn.className = 'lchat-send-btn';
         sendBtn.innerHTML = ICON_SEND;
@@ -465,12 +468,11 @@
             return r.json();
         })
         .then(function (json) {
-            var list = json.data || json;
-            if (Array.isArray(list)) {
-                state.messages = list;
-                renderMessages();
-                scrollToBottom(true);
-            }
+            var raw = json.data || json;
+            var list = Array.isArray(raw) ? raw : (Array.isArray(raw.data) ? raw.data : []);
+            state.messages = list;
+            renderMessages();
+            scrollToBottom(true);
         })
         .catch(logError);
     }
@@ -639,8 +641,9 @@
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (json) {
                 if (!json) return;
-                var list = json.data || json;
-                if (!Array.isArray(list)) return;
+                var raw = json.data || json;
+                var list = Array.isArray(raw) ? raw : (Array.isArray(raw.data) ? raw.data : []);
+                if (!list.length) return;
 
                 var prevLen = state.messages.length;
                 var existingIds = {};
