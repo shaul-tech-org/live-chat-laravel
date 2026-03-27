@@ -44,8 +44,29 @@
     </main>
 </div>
 
+@push('head')
+<script src="https://cdn.jsdelivr.net/npm/pusher-js@8/dist/web/pusher.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/laravel-echo@2/dist/echo.iife.min.js" defer></script>
+@endpush
+
 @push('scripts')
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.Echo) return;
+    var token = document.cookie.match(/shaul_access_token=([^;]+)/)?.[1] || '';
+    window.Echo = new window.Echo({
+        broadcaster: 'reverb',
+        key: '{{ config("reverb.apps.apps.0.key", "live-chat-key") }}',
+        wsHost: '{{ config("reverb.apps.apps.0.options.host", request()->getHost()) }}',
+        wsPort: {{ config("reverb.apps.apps.0.options.port", 443) }},
+        wssPort: {{ config("reverb.apps.apps.0.options.port", 443) }},
+        forceTLS: {{ config("reverb.apps.apps.0.options.scheme", "https") === "https" ? "true" : "false" }},
+        enabledTransports: ['ws', 'wss'],
+        authEndpoint: '/api/broadcasting/auth',
+        auth: { headers: { 'Authorization': 'Bearer ' + token } },
+    });
+});
+
 function adminApp() {
     return {
         activeTab: 'chat',

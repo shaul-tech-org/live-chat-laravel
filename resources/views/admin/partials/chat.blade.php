@@ -108,6 +108,8 @@
                     </template>
                 </div>
 
+                <div x-show="typingUser" x-cloak class="px-4 py-1 text-xs text-gray-400 italic" x-text="typingUser + ' 입력 중...'"></div>
+
                 <div class="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shrink-0">
                     <div class="flex gap-2">
                         <textarea
@@ -161,12 +163,47 @@ function chatTab() {
             });
         },
 
+        typingUser: null,
+        typingTimeout: null,
+
         async init() {
             try {
                 const res = await fetch('/api/admin/rooms', { headers: this.authHeaders });
                 const json = await res.json();
                 if (json.success) this.rooms = json.data;
             } catch (e) {}
+            this.initEcho();
+        },
+
+        initEcho() {
+            if (!window.Echo) return;
+            this.rooms.forEach(room => {
+                window.Echo.private('chat.' + room.id)
+                    .listen('.message.sent', (e) => {
+                        if (this.selectedRoom && this.selectedRoom.id === e.room_id) {
+                            if (!this.messages.find(m => m.id === e.id)) {
+                                this.messages.push(e);
+                                this.$nextTick(() => {
+                                    if (this.$refs.messageContainer) {
+                                        this.$refs.messageContainer.scrollTop = this.$refs.messageContainer.scrollHeight;
+                                    }
+                                });
+                            }
+                        }
+                    })
+                    .listen('.typing.started', (e) => {
+                        if (this.selectedRoom && this.selectedRoom.id === e.room_id && e.sender_type === 'visitor') {
+                            this.typingUser = e.sender_name;
+                            clearTimeout(this.typingTimeout);
+                            this.typingTimeout = setTimeout(() => { this.typingUser = null; }, 3000);
+                        }
+                    })
+                    .listen('.message.read', (e) => {
+                        if (this.selectedRoom && this.selectedRoom.id === e.room_id) {
+                            this.messages.forEach(m => { m.is_read = true; });
+                        }
+                    });
+            });
         },
 
         async selectRoom(room) {
