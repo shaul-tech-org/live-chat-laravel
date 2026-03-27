@@ -73,7 +73,7 @@
             '.lchat-bubble-pulse{animation:lchat-pulse .8s ease-out;}\n' +
 
             /* Panel */
-            '.lchat-backdrop{display:none;position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:200vh;background:#000;z-index:999998;}\n' +
+            '.lchat-backdrop{display:none;position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:200vh;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:999998;touch-action:none;}\n' +
             '.lchat-backdrop.lchat-show{display:block;}\n' +
             '.lchat-panel{position:fixed;bottom:96px;right:24px;width:380px;height:520px;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.18);z-index:999999;display:flex;flex-direction:column;overflow:hidden;transform:translateY(20px);opacity:0;transition:transform .25s ease,opacity .25s ease;pointer-events:none;}\n' +
             '.lchat-panel.lchat-open{transform:translateY(0);opacity:1;pointer-events:auto;}\n' +
@@ -299,6 +299,11 @@
         if (state.open) {
             panel.classList.add('lchat-open');
             if (isMobile()) {
+                state.savedScrollY = window.scrollY;
+                document.body.style.position = 'fixed';
+                document.body.style.top = '-' + state.savedScrollY + 'px';
+                document.body.style.left = '0';
+                document.body.style.right = '0';
                 document.body.style.overflow = 'hidden';
                 backdrop.classList.add('lchat-show');
                 updatePanelLayout();
@@ -318,7 +323,12 @@
         } else {
             panel.classList.remove('lchat-open');
             if (isMobile()) {
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.left = '';
+                document.body.style.right = '';
                 document.body.style.overflow = '';
+                window.scrollTo(0, state.savedScrollY || 0);
                 backdrop.classList.remove('lchat-show');
                 resetPanelLayout();
             }
