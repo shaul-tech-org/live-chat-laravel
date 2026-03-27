@@ -1,3 +1,13 @@
+# Stage 1: Frontend build
+FROM node:22-alpine AS frontend
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY vite.config.js ./
+COPY resources ./resources
+RUN npm run build
+
+# Stage 2: PHP application
 FROM php:8.4-fpm-alpine
 
 # 시스템 의존성
@@ -35,6 +45,9 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 # 소스 복사
 COPY . .
 RUN composer dump-autoload --optimize
+
+# Frontend 빌드 결과 복사
+COPY --from=frontend /app/public/build ./public/build
 
 # 퍼미션
 RUN chown -R www-data:www-data storage bootstrap/cache \

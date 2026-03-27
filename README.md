@@ -55,6 +55,7 @@ cp .env.example .env
 ```env
 # 앱 설정
 APP_URL=https://your-domain.com
+APP_PORT=80                        # nginx 외부 포트 (기본: 80)
 
 # PostgreSQL
 DB_USERNAME=chatuser
@@ -77,7 +78,26 @@ REVERB_APP_SECRET=랜덤_문자열
 REVERB_HOST=your-domain.com
 ```
 
-### 3. Docker Compose 실행
+> **포트 변경**: 기본 포트(80, 5432, 27017, 6379)가 이미 사용 중이라면 `.env`에서 외부 포트를 변경합니다:
+> ```env
+> APP_PORT=10850                   # nginx
+> PG_PORT=15432                    # PostgreSQL
+> MONGO_EXTERNAL_PORT=27018        # MongoDB
+> REDIS_EXTERNAL_PORT=16379        # Redis
+> ```
+> `MONGO_EXTERNAL_PORT`와 `REDIS_EXTERNAL_PORT`는 호스트 포트 매핑 전용입니다. `MONGO_PORT`(27017), `REDIS_PORT`(6379)는 컨테이너 내부 연결 포트이므로 변경하지 마세요.
+
+### 3. APP_KEY 생성
+
+Docker 이미지는 `env_file`로 환경 변수를 주입받으므로, 컨테이너 내부에 `.env` 파일이 존재하지 않습니다. **컨테이너 실행 전에** 호스트의 `.env`에 APP_KEY를 설정해야 합니다:
+
+```bash
+# APP_KEY를 생성하여 .env에 기록
+APP_KEY=$(docker run --rm registry.shaul.kr/livechat/app:1.0.1 php artisan key:generate --show --no-ansi)
+sed -i "s|APP_KEY=|APP_KEY=${APP_KEY}|" .env
+```
+
+### 4. Docker Compose 실행
 
 ```bash
 docker compose up -d
@@ -85,35 +105,30 @@ docker compose up -d
 
 8개 서비스가 기동됩니다:
 
-| 서비스 | 역할 | 포트 |
-|--------|------|------|
+| 서비스 | 역할 | 기본 포트 |
+|--------|------|-----------|
 | nginx | 리버스 프록시 (HTTP + WSS) | 80 |
-| app | PHP-FPM (Laravel) | 9000 |
-| reverb | WebSocket 서버 | 8080 |
+| app | PHP-FPM (Laravel) | 9000 (내부) |
+| reverb | WebSocket 서버 | 8080 (내부) |
 | worker | 큐 처리 | - |
 | scheduler | 스케줄러 | - |
 | postgres | RDBMS | 5432 |
 | mongodb | 문서 DB | 27017 |
 | redis | 캐시/큐/세션 | 6379 |
 
-### 4. 의존성 설치 + 초기 설정
+### 5. 데이터베이스 마이그레이션
 
 ```bash
-# Composer 의존성 설치
-docker exec lchat-app composer install --no-dev --optimize-autoloader
-
-# APP_KEY 생성
-docker exec lchat-app php artisan key:generate --force
-
-# 데이터베이스 마이그레이션
 docker exec lchat-app php artisan migrate --force
 ```
 
-### 5. 접속 확인
+### 6. 접속 확인
 
 - 관리자: `http://localhost/login`
 - Health: `http://localhost/api/health`
 - 데모: `http://localhost/demo`
+
+> 포트를 변경한 경우 `http://localhost:<APP_PORT>/login` 으로 접속합니다.
 
 ## 위젯 설치 (웹사이트에 삽입)
 

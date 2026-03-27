@@ -18,7 +18,7 @@ services:
   # PHP-FPM — Laravel Application
   # ===========================
   app:
-    image: registry.shaul.kr/livechat/app:1.0.0
+    image: registry.shaul.kr/livechat/app:1.0.1
     container_name: lchat-app
     volumes:
       - storage:/var/www/html/storage
@@ -38,7 +38,7 @@ services:
   # Reverb — WebSocket Server
   # ===========================
   reverb:
-    image: registry.shaul.kr/livechat/app:1.0.0
+    image: registry.shaul.kr/livechat/app:1.0.1
     container_name: lchat-reverb
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
     env_file: .env
@@ -52,7 +52,7 @@ services:
   # Queue Worker — Event Processing
   # ===========================
   worker:
-    image: registry.shaul.kr/livechat/app:1.0.0
+    image: registry.shaul.kr/livechat/app:1.0.1
     container_name: lchat-worker
     command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
     env_file: .env
@@ -66,7 +66,7 @@ services:
   # Scheduler — Cron Tasks
   # ===========================
   scheduler:
-    image: registry.shaul.kr/livechat/app:1.0.0
+    image: registry.shaul.kr/livechat/app:1.0.1
     container_name: lchat-scheduler
     command: sh -c "while true; do php artisan schedule:run --no-interaction; sleep 60; done"
     env_file: .env
@@ -111,7 +111,7 @@ services:
     volumes:
       - mongodb-data:/data/db
     ports:
-      - "${MONGO_PORT:-27017}:27017"
+      - "${MONGO_EXTERNAL_PORT:-27017}:27017"
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "-u", "${MONGO_USERNAME:-chatuser}", "-p", "${MONGO_PASSWORD:-changeme}", "--authenticationDatabase", "admin"]
       interval: 5s
@@ -131,7 +131,7 @@ services:
     volumes:
       - redis-data:/data
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "${REDIS_EXTERNAL_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
       interval: 5s
