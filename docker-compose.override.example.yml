@@ -1,0 +1,20 @@
+# 개발 환경용 오버라이드 — 호스트 소스 마운트
+# 사용법: cp docker-compose.override.example.yml docker-compose.override.yml
+services:
+  app:
+    volumes:
+      - .:/var/www/html
+      - ./storage:/var/www/html/storage
+  reverb:
+    volumes:
+      - .:/var/www/html
+  worker:
+    volumes:
+      - .:/var/www/html
+  scheduler:
+    volumes:
+      - .:/var/www/html
+  nginx:
+    volumes:
+      - ./public:/var/www/html/public:ro
+      - ./storage/app/public:/var/www/html/storage/app/public:ro

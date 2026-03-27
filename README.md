@@ -80,7 +80,7 @@ REVERB_HOST=your-domain.com
 ### 3. Docker Compose 실행
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 8개 서비스가 기동됩니다:
