@@ -211,8 +211,10 @@
         prechatInput.type = 'text';
         prechatInput.placeholder = '이름을 입력하세요';
         prechatInput.maxLength = 50;
-        prechatInput.setAttribute('autocomplete', 'off');
+        prechatInput.setAttribute('autocomplete', 'one-time-code');
         prechatInput.setAttribute('enterkeyhint', 'go');
+        prechatInput.setAttribute('data-form-type', 'other');
+        prechatInput.setAttribute('data-lpignore', 'true');
         prechatBtn = document.createElement('button');
         prechatBtn.className = 'lchat-prechat-btn';
         prechatBtn.textContent = '시작하기';
@@ -244,7 +246,7 @@
         textarea.className = 'lchat-textarea';
         textarea.placeholder = '메시지를 입력하세요...';
         textarea.rows = 1;
-        textarea.setAttribute('autocomplete', 'off');
+        textarea.setAttribute('autocomplete', 'one-time-code');
         textarea.setAttribute('autocorrect', 'off');
         textarea.setAttribute('autocapitalize', 'off');
         textarea.setAttribute('spellcheck', 'false');
