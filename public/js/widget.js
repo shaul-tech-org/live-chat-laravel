@@ -146,7 +146,7 @@
 
             /* Mobile responsive */
             '@media(max-width:639px){\n' +
-            '  .lchat-panel{bottom:0;right:0;left:0;top:0;width:100%;height:100%;border-radius:0;}\n' +
+            '  .lchat-panel{bottom:0;right:0;left:0;top:0;width:100%;height:100%;border-radius:0;overscroll-behavior:none;}\n' +
             '  .lchat-bubble{bottom:16px;right:16px;}\n' +
             '  .lchat-textarea,.lchat-prechat input{font-size:16px !important;}\n' +
             '}\n';
@@ -307,6 +307,7 @@
                 document.body.style.left = '0';
                 document.body.style.right = '0';
                 document.body.style.width = '100%';
+                document.addEventListener('touchstart', trackTouchStart, { passive: true });
                 document.addEventListener('touchmove', preventBgScroll, { passive: false });
                 backdrop.classList.add('lchat-show');
                 updatePanelLayout();
@@ -326,6 +327,7 @@
         } else {
             panel.classList.remove('lchat-open');
             if (isMobile()) {
+                document.removeEventListener('touchstart', trackTouchStart);
                 document.removeEventListener('touchmove', preventBgScroll);
                 document.documentElement.style.overflow = '';
                 document.body.style.overflow = '';
@@ -722,13 +724,39 @@
     }
 
     function preventBgScroll(e) {
-        /* Allow scrolling inside messages area and contenteditable */
+        /* Allow scrolling inside messages area only */
         var el = e.target;
-        while (el && el !== document.body) {
-            if (el === messagesEl || el === textarea) return;
+        while (el && el !== document.body && el !== document.documentElement) {
+            if (el === messagesEl) {
+                /* Allow only if there's actually overflow to scroll */
+                var atTop = messagesEl.scrollTop <= 0;
+                var atBottom = messagesEl.scrollTop + messagesEl.clientHeight >= messagesEl.scrollHeight - 1;
+                if (e.touches && e.touches.length === 1) {
+                    var touch = e.touches[0];
+                    var dy = touch.clientY - (state._lastTouchY || touch.clientY);
+                    state._lastTouchY = touch.clientY;
+                    /* Block if at edge and trying to scroll further */
+                    if ((atTop && dy > 0) || (atBottom && dy < 0)) {
+                        e.preventDefault();
+                    }
+                }
+                return;
+            }
+            if (el === panel) {
+                /* Inside panel but not messages — block scroll */
+                e.preventDefault();
+                return;
+            }
             el = el.parentElement;
         }
+        /* Outside panel — always block */
         e.preventDefault();
+    }
+
+    function trackTouchStart(e) {
+        if (e.touches && e.touches.length === 1) {
+            state._lastTouchY = e.touches[0].clientY;
+        }
     }
 
     var rafPending = false;
