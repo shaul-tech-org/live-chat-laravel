@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Events\MessageSent;
 use App\Listeners\FaqAutoReplyListener;
 use App\Listeners\OfflineAutoReplyListener;
+use App\Listeners\TelegramNotifyListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -16,6 +17,7 @@ class EventServiceProvider extends ServiceProvider
         MessageSent::class => [
             FaqAutoReplyListener::class,
             OfflineAutoReplyListener::class,
+            TelegramNotifyListener::class,
         ],
     ];
 
