@@ -3,13 +3,12 @@ services:
   # Nginx — Reverse Proxy (HTTP + WSS)
   # ===========================
   nginx:
-    build: ./docker/nginx
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
     container_name: lchat-nginx
     ports:
       - "${APP_PORT:-80}:80"
-    volumes:
-      - app-public:/var/www/html/public:ro
-      - app-storage:/var/www/html/storage/app/public:ro
     depends_on:
       - app
       - reverb
@@ -26,8 +25,7 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: lchat-app
     volumes:
-      - app-storage:/var/www/html/storage
-      - app-public:/var/www/html/public
+      - storage:/var/www/html/storage
     env_file: .env
     depends_on:
       postgres:
@@ -154,8 +152,7 @@ services:
       - lchat
 
 volumes:
-  app-storage:
-  app-public:
+  storage:
   postgres-data:
   mongodb-data:
   redis-data:
