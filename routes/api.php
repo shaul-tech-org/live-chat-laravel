@@ -14,8 +14,8 @@ Route::get('/widget/config', [Api\WidgetConfigController::class, 'show']);
 // Auth
 Route::post('/auth/login', [Auth\LoginController::class, 'login']);
 
-// Widget (API Key middleware)
-Route::middleware('api.key')->group(function () {
+// Widget (API Key + XSS middleware)
+Route::middleware(['api.key', 'xss'])->group(function () {
     Route::post('/rooms', [Api\RoomController::class, 'store']);
     Route::get('/rooms', [Api\RoomController::class, 'visitorRooms']);
     Route::post('/feedbacks', [Api\FeedbackController::class, 'store']);
@@ -41,8 +41,8 @@ Route::middleware('api.key')->group(function () {
 // Broadcasting auth (custom — API key or bearer token)
 Route::post('/broadcasting/auth', [\App\Http\Controllers\BroadcastAuthController::class, 'authenticate']);
 
-// Admin (Built-in / Keycloak auth)
-Route::middleware('admin.auth')->prefix('admin')->group(function () {
+// Admin (Built-in / Keycloak auth + XSS)
+Route::middleware(['admin.auth', 'xss'])->prefix('admin')->group(function () {
     // Rooms
     Route::get('/rooms', [Admin\RoomController::class, 'index']);
     Route::patch('/rooms/{id}', [Admin\RoomController::class, 'update']);
