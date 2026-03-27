@@ -96,11 +96,11 @@ docker compose up -d
 | mongodb | 문서 DB | 27017 |
 | redis | 캐시/큐/세션 | 6379 |
 
-### 4. 데이터베이스 마이그레이션
+### 4. APP_KEY 생성 + 데이터베이스 마이그레이션
 
 ```bash
+docker exec lchat-app php artisan key:generate --force
 docker exec lchat-app php artisan migrate --force
-docker exec lchat-app php artisan key:generate
 ```
 
 ### 5. 접속 확인
