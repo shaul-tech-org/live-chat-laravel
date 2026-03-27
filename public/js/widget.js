@@ -108,10 +108,11 @@
 
             /* Input area */
             '.lchat-input-area{padding:12px;border-top:1px solid #E5E7EB;display:flex;align-items:flex-end;gap:8px;background:#fff;flex-shrink:0;}\n' +
-            '.lchat-textarea{flex:1;resize:none;border:1px solid #D1D5DB;border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.4;max-height:100px;outline:none;background:#fff;color:#1F2937;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;}\n' +
+            '.lchat-textarea{flex:1;border:1px solid #D1D5DB;border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.4;min-height:20px;max-height:100px;outline:none;background:#fff;color:#1F2937;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;-webkit-user-select:text;user-select:text;word-break:break-word;white-space:pre-wrap;}\n' +
             '.lchat-textarea::-webkit-scrollbar{display:none;}\n' +
             '.lchat-textarea:focus{border-color:#4F46E5;box-shadow:0 0 0 2px rgba(79,70,229,.15);}\n' +
-            '.lchat-textarea::placeholder{color:#9CA3AF;}\n' +
+            '.lchat-textarea:empty::before{content:attr(data-placeholder);color:#9CA3AF;pointer-events:none;}\n' +
+            '.lchat-textarea br.lchat-placeholder-br{display:none;}\n' +
             '.lchat-send-btn{width:38px;height:38px;border-radius:10px;border:none;background:#4F46E5;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}\n' +
             '.lchat-send-btn:hover{background:#4338CA;}\n' +
             '.lchat-send-btn:disabled{background:#A5B4FC;cursor:not-allowed;}\n' +
@@ -249,18 +250,13 @@
         /* Input area */
         inputArea = document.createElement('div');
         inputArea.className = 'lchat-input-area lchat-hidden';
-        textarea = document.createElement('textarea');
+        textarea = document.createElement('div');
         textarea.className = 'lchat-textarea';
-        textarea.placeholder = '메시지를 입력하세요...';
-        textarea.rows = 1;
-        textarea.setAttribute('autocomplete', 'one-time-code');
-        textarea.setAttribute('autocorrect', 'off');
-        textarea.setAttribute('autocapitalize', 'off');
-        textarea.setAttribute('spellcheck', 'false');
+        textarea.setAttribute('contenteditable', 'true');
+        textarea.setAttribute('role', 'textbox');
+        textarea.setAttribute('aria-label', '메시지 입력');
+        textarea.setAttribute('data-placeholder', '메시지를 입력하세요...');
         textarea.setAttribute('enterkeyhint', 'send');
-        textarea.setAttribute('data-form-type', 'other');
-        textarea.setAttribute('data-lpignore', 'true');
-        textarea.setAttribute('name', 'lchat-msg-' + Date.now());
         sendBtn = document.createElement('button');
         sendBtn.className = 'lchat-send-btn';
         sendBtn.innerHTML = ICON_SEND;
@@ -488,12 +484,19 @@
         .catch(logError);
     }
 
+    function getTextareaValue() {
+        return (textarea.innerText || textarea.textContent || '').trim();
+    }
+
+    function clearTextarea() {
+        textarea.innerHTML = '';
+    }
+
     function sendMessage() {
-        var content = textarea.value.trim();
+        var content = getTextareaValue();
         if (!content || !state.roomId) return;
 
-        textarea.value = '';
-        autoResizeTextarea();
+        clearTextarea();
         sendBtn.disabled = true;
 
         var tempMsg = {
@@ -568,8 +571,7 @@
 
     /* ── Textarea Auto-resize ──────────────────────────────── */
     function autoResizeTextarea() {
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+        /* contenteditable auto-resizes naturally via min/max-height CSS */
     }
 
     /* ── WebSocket / Polling ────────────────────────────────── */
@@ -768,9 +770,15 @@
             }
         });
 
+        /* Prevent paste from inserting HTML (plain text only) */
+        textarea.addEventListener('paste', function (e) {
+            e.preventDefault();
+            var text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+
         /* Typing indicator debounce */
         textarea.addEventListener('input', function () {
-            autoResizeTextarea();
             sendTypingIndicator();
         });
 
