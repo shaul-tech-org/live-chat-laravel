@@ -11,6 +11,6 @@ class Reaction extends Model
     protected $collection = 'reactions';
 
     protected $fillable = [
-        'message_id', 'emoji', 'user_id',
+        'room_id', 'message_id', 'emoji', 'user_id',
     ];
 }

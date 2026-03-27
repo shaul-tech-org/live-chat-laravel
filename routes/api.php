@@ -23,7 +23,23 @@ Route::middleware('api.key')->group(function () {
     Route::post('/events', [Api\EventController::class, 'store']);
     Route::get('/link-preview', [Api\LinkPreviewController::class, 'show']);
     Route::post('/rooms/{id}/transcript', [Api\TranscriptController::class, 'store']);
+
+    // Messages (Phase 3 — WebSocket)
+    Route::post('/rooms/{id}/messages', [Api\MessageController::class, 'store']);
+    Route::get('/rooms/{id}/messages', [Api\MessageController::class, 'index']);
+
+    // Typing indicator
+    Route::post('/rooms/{id}/typing', [Api\TypingController::class, 'store']);
+
+    // Reactions
+    Route::post('/rooms/{id}/reactions', [Api\ReactionController::class, 'store']);
+
+    // Read receipts
+    Route::post('/rooms/{id}/read', [Api\ReadReceiptController::class, 'store']);
 });
+
+// Broadcasting auth (custom — API key or bearer token)
+Route::post('/broadcasting/auth', [\App\Http\Controllers\BroadcastAuthController::class, 'authenticate']);
 
 // Admin (Built-in / Keycloak auth)
 Route::middleware('admin.auth')->prefix('admin')->group(function () {
