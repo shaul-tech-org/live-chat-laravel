@@ -748,7 +748,7 @@
 
         /* Textarea: Enter to send, Shift+Enter for newline */
         textarea.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
                 e.preventDefault();
                 sendMessage();
             }
