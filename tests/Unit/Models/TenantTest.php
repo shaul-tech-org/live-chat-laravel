@@ -28,4 +28,17 @@ class TenantTest extends TestCase
         $casts = $tenant->getCasts();
         $this->assertEquals('boolean', $casts['is_active']);
     }
+
+    public function test_tenant_uses_uuid_primary_key(): void
+    {
+        $tenant = new Tenant();
+        $this->assertEquals('string', $tenant->getKeyType());
+        $this->assertFalse($tenant->getIncrementing());
+    }
+
+    public function test_tenant_hides_api_key(): void
+    {
+        $tenant = new Tenant();
+        $this->assertContains('api_key', $tenant->getHidden());
+    }
 }

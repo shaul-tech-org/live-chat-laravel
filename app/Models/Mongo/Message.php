@@ -2,14 +2,15 @@
 
 namespace App\Models\Mongo;
 
+use Illuminate\Database\Eloquent\Attributes\Connection;
 use MongoDB\Laravel\Eloquent\Model;
 use MongoDB\Laravel\Eloquent\SoftDeletes;
 
+#[Connection('mongodb')]
 class Message extends Model
 {
     use SoftDeletes;
 
-    protected $connection = 'mongodb';
     protected $collection = 'messages';
 
     protected $fillable = [

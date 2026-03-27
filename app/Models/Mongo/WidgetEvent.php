@@ -2,11 +2,12 @@
 
 namespace App\Models\Mongo;
 
+use Illuminate\Database\Eloquent\Attributes\Connection;
 use MongoDB\Laravel\Eloquent\Model;
 
+#[Connection('mongodb')]
 class WidgetEvent extends Model
 {
-    protected $connection = 'mongodb';
     protected $collection = 'widget_events';
 
     protected $fillable = [

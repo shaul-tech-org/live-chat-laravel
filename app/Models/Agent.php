@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\AgentRole;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[Table(key: 'id', keyType: 'string', incrementing: false)]
 class Agent extends Model
 {
     use HasUuids, SoftDeletes;
@@ -16,6 +19,7 @@ class Agent extends Model
     ];
 
     protected $casts = [
+        'role' => AgentRole::class,
         'is_online' => 'boolean',
         'is_active' => 'boolean',
         'last_seen_at' => 'datetime',

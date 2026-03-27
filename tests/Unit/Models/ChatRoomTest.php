@@ -28,4 +28,11 @@ class ChatRoomTest extends TestCase
         $this->assertEquals('open', RoomStatus::Open->value);
         $this->assertEquals('closed', RoomStatus::Closed->value);
     }
+
+    public function test_chat_room_uses_uuid_primary_key(): void
+    {
+        $room = new ChatRoom();
+        $this->assertEquals('string', $room->getKeyType());
+        $this->assertFalse($room->getIncrementing());
+    }
 }

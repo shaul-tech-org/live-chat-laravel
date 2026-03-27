@@ -2,11 +2,12 @@
 
 namespace App\Models\Mongo;
 
+use Illuminate\Database\Eloquent\Attributes\Connection;
 use MongoDB\Laravel\Eloquent\Model;
 
+#[Connection('mongodb')]
 class Reaction extends Model
 {
-    protected $connection = 'mongodb';
     protected $collection = 'reactions';
 
     protected $fillable = [

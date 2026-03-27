@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Enums\RoomStatus;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[Table(key: 'id', keyType: 'string', incrementing: false)]
 class ChatRoom extends Model
 {
     use HasUuids, SoftDeletes;
