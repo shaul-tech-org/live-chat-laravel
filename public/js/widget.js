@@ -44,6 +44,7 @@
         darkMode: false,
         typingTimeout: null,
         showTyping: false,
+        connectionStatus: 'offline', /* 'online' | 'reconnecting' | 'offline' */
     };
 
     /* ── Dark Mode Detection ───────────────────────────────── */
@@ -83,7 +84,11 @@
             '.lchat-header{background:#4F46E5;color:#fff;padding:16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}\n' +
             '.lchat-header-left{display:flex;align-items:center;gap:8px;}\n' +
             '.lchat-header-title{font-size:15px;font-weight:600;}\n' +
-            '.lchat-status-dot{width:8px;height:8px;border-radius:50%;background:#34D399;flex-shrink:0;}\n' +
+            '.lchat-status-dot{width:8px;height:8px;border-radius:50%;background:#9CA3AF;flex-shrink:0;transition:background .3s ease;}\n' +
+            '.lchat-status-dot.lchat-online{background:#34D399;}\n' +
+            '.lchat-status-dot.lchat-reconnecting{background:#FBBF24;animation:lchat-status-pulse 1s infinite;}\n' +
+            '.lchat-status-dot.lchat-offline{background:#9CA3AF;}\n' +
+            '@keyframes lchat-status-pulse{0%,100%{opacity:1;}50%{opacity:.4;}}\n' +
             '.lchat-close-btn{background:none;border:none;color:#fff;cursor:pointer;padding:4px;border-radius:4px;display:flex;align-items:center;justify-content:center;}\n' +
             '.lchat-close-btn:hover{background:rgba(255,255,255,.15);}\n' +
             '.lchat-close-btn svg{width:20px;height:20px;fill:#fff;}\n' +
@@ -162,6 +167,9 @@
             '.lchat-dark .lchat-topic-btn:hover{background:#1E1B4B;color:#A5B4FC;border-color:#4F46E5;}\n' +
             '.lchat-dark .lchat-prechat-divider::before,.lchat-dark .lchat-prechat-divider::after{background:#374151;}\n' +
             '.lchat-dark .lchat-header{background:#3730A3;}\n' +
+            '.lchat-dark .lchat-status-dot.lchat-online{background:#34D399;}\n' +
+            '.lchat-dark .lchat-status-dot.lchat-reconnecting{background:#F59E0B;}\n' +
+            '.lchat-dark .lchat-status-dot.lchat-offline{background:#6B7280;}\n' +
 
             /* Mobile responsive */
             '@media(max-width:639px){\n' +
@@ -340,6 +348,26 @@
         } else {
             root.classList.remove('lchat-dark');
         }
+    }
+
+    /* ── Connection Status ──────────────────────────────────── */
+    var STATUS_LABELS = {
+        online: '실시간 채팅',
+        reconnecting: '재연결 중...',
+        offline: '오프라인',
+    };
+
+    function updateConnectionStatus(status) {
+        if (state.connectionStatus === status) return;
+        state.connectionStatus = status;
+
+        var dot = root && root.querySelector('.lchat-status-dot');
+        var title = root && root.querySelector('.lchat-header-title');
+        if (!dot || !title) return;
+
+        dot.classList.remove('lchat-online', 'lchat-reconnecting', 'lchat-offline');
+        dot.classList.add('lchat-' + status);
+        title.textContent = STATUS_LABELS[status] || STATUS_LABELS.offline;
     }
 
     /* ── UI Helpers ─────────────────────────────────────────── */
@@ -672,6 +700,8 @@
     function connectRealtime() {
         if (!state.roomId) return;
 
+        updateConnectionStatus('reconnecting');
+
         if (cfg.reverbKey) {
             connectEcho().catch(function () {
                 startPolling();
@@ -699,6 +729,19 @@
                     },
                 });
 
+                /* Connection status bindings */
+                var pusherConn = echo.connector.pusher.connection;
+                pusherConn.bind('connecting', function () {
+                    updateConnectionStatus('reconnecting');
+                });
+                pusherConn.bind('connected', function () {
+                    updateConnectionStatus('online');
+                    stopPolling(); /* stop fallback polling if Echo reconnects */
+                });
+                pusherConn.bind('unavailable', function () {
+                    updateConnectionStatus('offline');
+                });
+
                 state.echoChannel = echo.private('chat.' + state.roomId);
 
                 state.echoChannel.listen('.message.sent', function (e) {
@@ -719,6 +762,7 @@
                 });
 
                 echo.connector.pusher.connection.bind('disconnected', function () {
+                    updateConnectionStatus('reconnecting');
                     startPolling();
                 });
             });
@@ -726,6 +770,7 @@
 
     function startPolling() {
         if (state.pollTimer) return;
+        updateConnectionStatus('online');
         state.pollTimer = setInterval(function () {
             if (!state.roomId) return;
             fetch(cfg.baseUrl + '/api/rooms/' + state.roomId + '/messages?limit=50', {
