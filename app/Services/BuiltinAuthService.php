@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
+
 class BuiltinAuthService
 {
     private string $email;
     private string $passwordHash;
-    private array $tokens = [];
 
     public function __construct(string $email, string $password)
     {
@@ -26,24 +27,18 @@ class BuiltinAuthService
         if (hash('sha256', $password) !== $this->passwordHash) return null;
 
         $token = bin2hex(random_bytes(32));
-        $this->tokens[$token] = [
+        Cache::put('auth_token:' . $token, [
             'id' => 'admin-builtin',
             'email' => $email,
             'name' => '관리자',
             'roles' => ['admin'],
-            'expires_at' => time() + 86400,
-        ];
+        ], 86400);
+
         return $token;
     }
 
     public function verify(string $token): ?array
     {
-        if (!isset($this->tokens[$token])) return null;
-        $session = $this->tokens[$token];
-        if (time() > $session['expires_at']) {
-            unset($this->tokens[$token]);
-            return null;
-        }
-        return $session;
+        return Cache::get('auth_token:' . $token);
     }
 }

@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Services\BuiltinAuthService;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class BuiltinAuthServiceTest extends TestCase
 {
