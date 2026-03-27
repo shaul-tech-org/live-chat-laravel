@@ -24,7 +24,7 @@
           ▼                               ▼
 ┌──────────────────┐           ┌──────────────────┐
 │  PHP-FPM (:9000) │           │  Reverb (:8080)  │
-│  Laravel 12      │           │  WebSocket 서버   │
+│  Laravel 13      │           │  WebSocket 서버   │
 │                  │           │                  │
 │  Controllers     │◄─ Redis ─►│  Broadcasting    │
 │  Middleware       │  Pub/Sub  │  Channels        │
@@ -446,7 +446,7 @@ widget.js (호스트 DOM)              iframe (격리)
 ┌─── Docker Compose ─────────────────────────────────┐
 │                                                     │
 │  ┌─── nginx ───┐  ┌─── app (PHP-FPM) ───┐         │
-│  │ :80 → :443  │  │ Laravel 12           │         │
+│  │ :80 → :443  │  │ Laravel 13           │         │
 │  │ TLS 종료    │─►│ Controllers          │         │
 │  │ WSS 프록시  │  │ Eloquent             │         │
 │  └─────────────┘  │ Services             │         │

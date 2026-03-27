@@ -3,7 +3,7 @@
 ## 1. 제품 개요
 
 ### 배경
-Go(Echo v4)로 구현된 Live Chat Widget을 Laravel 12로 마이그레이션한다. 기존 기능 100%를 유지하면서 Laravel 생태계의 장점(Eloquent, Broadcasting, Mail, Filesystem 등)을 활용한다.
+Go(Echo v4)로 구현된 Live Chat Widget을 Laravel 13로 마이그레이션한다. 기존 기능 100%를 유지하면서 Laravel 생태계의 장점(Eloquent, Broadcasting, Mail, Filesystem 등)을 활용한다.
 
 ### 목적
 - 기존 Go 버전의 모든 기능을 Laravel로 1:1 이식
@@ -112,7 +112,7 @@ Go 버전이 이미 완성된 제품이므로, Laravel MVP는 **Go 기능 전체
 
 | 영역 | 기술 | WHY |
 |------|------|-----|
-| 프레임워크 | Laravel 12 | PHP 생태계 최대, Reverb/Broadcasting 내장 |
+| 프레임워크 | Laravel 13 | PHP 생태계 최대, Reverb/Broadcasting 내장 |
 | PHP | 8.4+ | 최신 성능 + 타입 시스템 |
 | WebSocket | Laravel Reverb | 공식 WS 서버, Broadcasting 통합, self-hosted |
 | ORM | Eloquent | 생산성, 마이그레이션, 관계 정의 |
@@ -291,7 +291,7 @@ One line of code. Real-time. Self-hosted.
   docker compose up -d
 
 ## Tech Stack
-Laravel 12 · PHP 8.4 · Reverb · PostgreSQL · MongoDB · Redis
+Laravel 13 · PHP 8.4+ · Reverb · PostgreSQL · MongoDB · Redis
 
 ## License
 MIT
