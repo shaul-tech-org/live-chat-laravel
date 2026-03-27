@@ -19,6 +19,15 @@ class FaqAutoReplyListener implements ShouldQueue
 
     public function handle(MessageSent $event): void
     {
+        try {
+            $this->process($event);
+        } catch (\Exception $e) {
+            Log::debug('FaqAutoReplyListener: skipped — ' . $e->getMessage());
+        }
+    }
+
+    private function process(MessageSent $event): void
+    {
         if ($event->sender_type !== 'visitor') {
             return;
         }
@@ -68,5 +77,10 @@ class FaqAutoReplyListener implements ShouldQueue
             'room_id' => $event->room_id,
             'keyword' => $faq->keyword,
         ]);
+    }
+
+    public function failed(MessageSent $event, \Throwable $exception): void
+    {
+        Log::debug('FaqAutoReplyListener: failed — ' . $exception->getMessage());
     }
 }
