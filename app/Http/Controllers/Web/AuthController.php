@@ -34,6 +34,8 @@ class AuthController extends Controller
                 ->withInput(['email' => $validated['email']]);
         }
 
+        session(['admin_token' => $token]);
+
         return redirect()->route('admin.dashboard')
             ->withCookie(cookie('shaul_access_token', $token, 1440, '/', null, false, true));
     }

@@ -9,6 +9,8 @@ class AdminController extends Controller
 {
     public function dashboard(): View
     {
-        return view('admin.dashboard');
+        return view('admin.dashboard', [
+            'adminToken' => session('admin_token', ''),
+        ]);
     }
 }

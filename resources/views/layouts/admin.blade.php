@@ -3,6 +3,7 @@
 @section('title', '관리자 - LCHAT')
 
 @section('body')
+<script>window.__ADMIN_TOKEN = @json($adminToken ?? '');</script>
 <div class="flex flex-col h-screen" x-data="adminApp()">
     {{-- 헤더 --}}
     <header class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0">
