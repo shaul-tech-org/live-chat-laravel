@@ -94,7 +94,7 @@ Docker 이미지는 `env_file`로 환경 변수를 주입받으므로, 컨테이
 ```bash
 # APP_KEY를 생성하여 .env에 기록
 APP_KEY=$(docker run --rm registry.shaul.kr/livechat/app:1.0.1 php artisan key:generate --show --no-ansi)
-sed -i "s|APP_KEY=|APP_KEY=${APP_KEY}|" .env
+sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" .env
 ```
 
 ### 4. Docker Compose 실행
