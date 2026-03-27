@@ -1,0 +1,159 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ===========================================
+  # CI: PHPUnit Tests
+  # ===========================================
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: chatuser
+          POSTGRES_PASSWORD: changeme
+          POSTGRES_DB: live_chat_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U chatuser -d live_chat_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+      mongodb:
+        image: mongo:8
+        env:
+          MONGO_INITDB_ROOT_USERNAME: chatuser
+          MONGO_INITDB_ROOT_PASSWORD: changeme
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ping:1})' -u chatuser -p changeme --authenticationDatabase admin --quiet"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pdo_sqlite, zip, intl, pcntl, sockets, opcache, mongodb, redis
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env || true
+          php artisan key:generate
+
+      - name: Run PHPUnit tests
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
+          MONGODB_URI: "mongodb://chatuser:changeme@127.0.0.1:27017"
+          MONGODB_DATABASE: live_chat_test
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          BROADCAST_CONNECTION: log
+          QUEUE_CONNECTION: sync
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+        run: php artisan test --parallel
+
+  # ===========================================
+  # CI: Frontend Build (Vite)
+  # ===========================================
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+  # ===========================================
+  # CD: Build & Push Docker images to Harbor
+  # ===========================================
+  build:
+    needs: [test, frontend]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    env:
+      REGISTRY: ${{ secrets.HARBOR_REGISTRY }}
+      IMAGE_PREFIX: livechat
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: tag
+        run: echo "TAG=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.HARBOR_REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Build & push app image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/php/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/app:${{ steps.tag.outputs.TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/app:latest
+
+      - name: Build & push nginx image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/nginx/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/nginx:${{ steps.tag.outputs.TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/nginx:latest
