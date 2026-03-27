@@ -47,6 +47,25 @@ class RoomController extends Controller
         ]);
     }
 
+    public function sendMessage(Request $request, string $id): JsonResponse
+    {
+        $room = $this->roomService->findOrFail($id);
+
+        $validated = $request->validate([
+            'content' => 'required|string|max:5000',
+            'sender_name' => 'nullable|string|max:100',
+        ]);
+
+        $message = $this->chatService->sendMessage($room, [
+            'sender_type' => 'agent',
+            'sender_name' => $validated['sender_name'] ?? '상담사',
+            'content' => $validated['content'],
+            'content_type' => 'text',
+        ]);
+
+        return ApiResponse::success(new MessageResource($message));
+    }
+
     public function messages(Request $request, string $id): JsonResponse
     {
         $room = $this->roomService->findOrFail($id);

@@ -48,6 +48,7 @@ Route::middleware(['admin.auth', 'xss'])->prefix('admin')->group(function () {
     Route::patch('/rooms/{id}', [Admin\RoomController::class, 'update']);
     Route::post('/rooms/{id}/read', [Admin\RoomController::class, 'markRead']);
     Route::get('/rooms/{id}/messages', [Admin\RoomController::class, 'messages']);
+    Route::post('/rooms/{id}/messages', [Admin\RoomController::class, 'sendMessage']);
 
     // Tenants
     Route::get('/tenants', [Admin\TenantController::class, 'index']);

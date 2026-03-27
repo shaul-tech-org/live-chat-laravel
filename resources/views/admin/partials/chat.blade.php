@@ -228,12 +228,11 @@ function chatTab() {
             const content = this.newMessage.trim();
             this.newMessage = '';
             try {
-                const res = await fetch(`/api/rooms/${this.selectedRoom.id}/messages`, {
+                const res = await fetch(`/api/admin/rooms/${this.selectedRoom.id}/messages`, {
                     method: 'POST',
                     headers: this.authHeaders,
                     body: JSON.stringify({
                         content: content,
-                        sender_type: 'agent',
                         sender_name: '상담사',
                     }),
                 });
