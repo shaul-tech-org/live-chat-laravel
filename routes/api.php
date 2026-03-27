@@ -74,6 +74,7 @@ Route::middleware(['admin.auth', 'xss', 'throttle:admin-api'])->prefix('admin')-
 
     // Agents
     Route::get('/agents', [Admin\AgentController::class, 'index']);
+    Route::get('/agents/online', [Admin\AgentController::class, 'online']);
     Route::post('/agents', [Admin\AgentController::class, 'store']);
     Route::delete('/agents/{id}', [Admin\AgentController::class, 'destroy']);
 

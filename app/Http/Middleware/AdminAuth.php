@@ -40,7 +40,15 @@ class AdminAuth
             }
         }
 
-        // TODO: Keycloak fallback (LCHAT-11)
+        // Try Keycloak auth (AUTH_API_URL must be configured)
+        $keycloakAuth = app(\App\Services\KeycloakAuthService::class);
+        if ($keycloakAuth->isEnabled()) {
+            $user = $keycloakAuth->verify($token);
+            if ($user) {
+                $request->merge(['auth_user' => $user]);
+                return $next($request);
+            }
+        }
 
         return response()->json(['error' => ['code' => 'UNAUTHORIZED', 'message' => '유효하지 않은 토큰입니다.']], 401);
     }

@@ -67,8 +67,12 @@
                     </div>
                 </div>
             </template>
-            <div x-show="filteredRooms.length === 0 && !loadingMore" class="p-4 text-center text-sm text-gray-400">
-                채팅방이 없습니다
+            <div x-show="filteredRooms.length === 0 && !loadingMore" class="p-6 text-center">
+                <svg class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                <p class="text-sm text-gray-400 dark:text-gray-500 mb-0.5">채팅방이 없습니다</p>
+                <p class="text-xs text-gray-300 dark:text-gray-600">방문자가 상담을 시작하면 여기에 표시됩니다</p>
             </div>
             <div x-show="loadingMore" class="p-3 text-center">
                 <span class="text-xs text-gray-400">불러오는 중...</span>
@@ -100,6 +104,13 @@
                                 class="ml-2 text-xs px-1.5 py-0.5 rounded"
                                 x-text="selectedRoom.status === 'active' ? '진행중' : '종료'"
                             ></span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                            <span class="relative flex h-2 w-2">
+                                <span x-show="onlineAgentCount > 0" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span :class="onlineAgentCount > 0 ? 'bg-green-500' : 'bg-gray-400'" class="relative inline-flex rounded-full h-2 w-2"></span>
+                            </span>
+                            <span x-text="'상담원 ' + onlineAgentCount + '명 온라인'"></span>
                         </div>
                     </div>
                 </div>
@@ -202,10 +213,22 @@ function chatTab() {
         typingTimeout: null,
         adminTypingTimeout: null,
         lastAdminTypingSent: 0,
+        onlineAgentCount: 0,
+        agentPollInterval: null,
 
         async init() {
             await this.fetchRooms(1);
             this.initEcho();
+            await this.fetchOnlineAgents();
+            this.agentPollInterval = setInterval(() => this.fetchOnlineAgents(), 30000);
+        },
+
+        async fetchOnlineAgents() {
+            try {
+                const res = await fetch('/api/admin/agents/online', { headers: this.authHeaders });
+                const json = await res.json();
+                if (json.success) this.onlineAgentCount = json.data.online_count;
+            } catch (e) {}
         },
 
         async fetchRooms(page) {

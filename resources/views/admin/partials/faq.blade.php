@@ -109,8 +109,12 @@
                 </tbody>
             </table>
         </div>
-        <div x-show="faqs.length === 0" class="p-8 text-center text-gray-400">
-            등록된 FAQ가 없습니다
+        <div x-show="faqs.length === 0" class="p-8 text-center">
+            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-gray-400 dark:text-gray-500 mb-1">등록된 FAQ가 없습니다</p>
+            <p class="text-xs text-gray-300 dark:text-gray-600">우측 상단의 '+ 새 FAQ' 버튼으로 자주 묻는 질문을 추가하세요</p>
         </div>
     </div>
 </div>

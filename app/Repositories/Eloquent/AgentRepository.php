@@ -35,4 +35,9 @@ class AgentRepository implements AgentRepositoryInterface
     {
         $agent->delete();
     }
+
+    public function countOnline(): int
+    {
+        return Agent::where('is_online', true)->count();
+    }
 }

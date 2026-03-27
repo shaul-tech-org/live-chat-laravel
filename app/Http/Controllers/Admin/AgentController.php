@@ -22,6 +22,15 @@ class AgentController extends Controller
         return ApiResponse::paginated(AgentResource::collection($agents));
     }
 
+    public function online(): JsonResponse
+    {
+        $count = $this->agentService->onlineCount();
+
+        return ApiResponse::success([
+            'online_count' => $count,
+        ]);
+    }
+
     public function store(CreateAgentRequest $request): JsonResponse
     {
         $agent = $this->agentService->create($request->validated());

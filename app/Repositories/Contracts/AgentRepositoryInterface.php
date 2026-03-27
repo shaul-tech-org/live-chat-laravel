@@ -16,4 +16,6 @@ interface AgentRepositoryInterface
     public function create(array $data): Agent;
 
     public function delete(Agent $agent): void;
+
+    public function countOnline(): int;
 }

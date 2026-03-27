@@ -18,6 +18,11 @@ class AgentService
         return $this->agentRepo->listAll($perPage);
     }
 
+    public function onlineCount(): int
+    {
+        return $this->agentRepo->countOnline();
+    }
+
     public function create(array $data): Agent
     {
         return $this->agentRepo->create($data);

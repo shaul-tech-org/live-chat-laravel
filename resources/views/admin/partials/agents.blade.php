@@ -137,8 +137,12 @@
                 </tbody>
             </table>
         </div>
-        <div x-show="agents.length === 0" class="p-8 text-center text-gray-400">
-            등록된 상담원이 없습니다
+        <div x-show="agents.length === 0" class="p-8 text-center">
+            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <p class="text-gray-400 dark:text-gray-500 mb-1">등록된 상담원이 없습니다</p>
+            <p class="text-xs text-gray-300 dark:text-gray-600">우측 상단의 '+ 새 상담원' 버튼으로 추가하세요</p>
         </div>
     </div>
 </div>
