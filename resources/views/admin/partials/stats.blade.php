@@ -83,7 +83,7 @@ function statsTab() {
 
         get authHeaders() {
             return {
-                'Authorization': 'Bearer ' + document.cookie.match(/shaul_access_token=([^;]+)/)?.[1],
+                'Authorization': 'Bearer ' + window.__ADMIN_TOKEN,
                 'Accept': 'application/json',
             };
         },
