@@ -141,7 +141,7 @@
 
             /* Mobile responsive */
             '@media(max-width:639px){\n' +
-            '  .lchat-panel{bottom:0;right:0;left:0;width:100%;height:100%;border-radius:0;}\n' +
+            '  .lchat-panel{bottom:0;right:0;left:0;top:0;width:100%;height:100dvh;height:calc(var(--lchat-vh,1vh)*100);border-radius:0;}\n' +
             '  .lchat-bubble{bottom:16px;right:16px;}\n' +
             '}\n';
 
@@ -666,6 +666,32 @@
         }, 3000);
     }
 
+    /* ── Mobile Viewport / Keyboard Handling ────────────────── */
+    function updateViewportHeight() {
+        var vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) * 0.01;
+        document.documentElement.style.setProperty('--lchat-vh', vh + 'px');
+    }
+
+    function setupMobileKeyboard() {
+        updateViewportHeight();
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', function () {
+                updateViewportHeight();
+                /* Ensure input stays visible when keyboard opens */
+                if (state.open && document.activeElement === textarea) {
+                    setTimeout(function () {
+                        textarea.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                        inputArea.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                    }, 100);
+                }
+            });
+        }
+
+        /* Fallback for browsers without visualViewport */
+        window.addEventListener('resize', updateViewportHeight);
+    }
+
     /* ── Event Handlers ────────────────────────────────────── */
     function bindEvents() {
         /* Bubble click */
@@ -701,6 +727,15 @@
         textarea.addEventListener('input', function () {
             autoResizeTextarea();
             sendTypingIndicator();
+        });
+
+        /* Mobile keyboard: scroll input into view on focus */
+        textarea.addEventListener('focus', function () {
+            if (window.innerWidth < 640) {
+                setTimeout(function () {
+                    inputArea.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                }, 300);
+            }
         });
 
         /* Scroll detection */
@@ -745,6 +780,7 @@
         injectStyles();
         buildDOM();
         bindEvents();
+        setupMobileKeyboard();
 
         /* Restore existing session */
         if (state.visitorName && state.roomId) {
