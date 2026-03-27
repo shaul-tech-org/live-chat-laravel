@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Providers;
+
+use App\Events\MessageSent;
+use App\Listeners\FaqAutoReplyListener;
+use App\Listeners\OfflineAutoReplyListener;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+
+class EventServiceProvider extends ServiceProvider
+{
+    /**
+     * @var array<class-string, array<int, class-string>>
+     */
+    protected $listen = [
+        MessageSent::class => [
+            FaqAutoReplyListener::class,
+            OfflineAutoReplyListener::class,
+        ],
+    ];
+
+    public function boot(): void
+    {
+        parent::boot();
+    }
+}
