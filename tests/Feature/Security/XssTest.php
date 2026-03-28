@@ -39,7 +39,7 @@ class XssTest extends TestCase
     public function test_script_tag_in_message_is_escaped(): void
     {
         $this->skipIfNoMongo();
-        $xssPayload = '<script>alert(1)</script>';
+        $xssPayload = 'Hello <script>alert(1)</script> World';
 
         $response = $this->postJson(
             "/api/rooms/{$this->room->id}/messages",
