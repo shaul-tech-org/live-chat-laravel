@@ -13,6 +13,7 @@ class AgentRoomTest extends TestCase
     use LazilyRefreshDatabase;
 
     private string $adminToken = '';
+    private string $adminUuid = '00000000-0000-0000-0000-000000000001';
     private Tenant $tenant;
 
     protected function setUp(): void
@@ -23,8 +24,32 @@ class AgentRoomTest extends TestCase
             'chat.admin_email' => 'admin@test.com',
             'chat.admin_password' => 'test-password',
         ]);
-        $this->app->singleton(\App\Services\BuiltinAuthService::class, function () {
-            return new \App\Services\BuiltinAuthService('admin@test.com', 'test-password');
+
+        // BuiltinAuthService 를 오버라이드하여 UUID 형식 ID를 반환하도록 설정
+        $adminUuid = $this->adminUuid;
+        $this->app->singleton(\App\Services\BuiltinAuthService::class, function () use ($adminUuid) {
+            return new class('admin@test.com', 'test-password', $adminUuid) extends \App\Services\BuiltinAuthService {
+                private string $uuid;
+                public function __construct(string $email, string $password, string $uuid)
+                {
+                    parent::__construct($email, $password);
+                    $this->uuid = $uuid;
+                }
+                public function login(string $email, string $password): ?string
+                {
+                    $token = parent::login($email, $password);
+                    if ($token) {
+                        // 캐시에 저장된 데이터의 id를 UUID로 덮어쓰기
+                        \Illuminate\Support\Facades\Cache::put('auth_token:' . $token, [
+                            'id' => $this->uuid,
+                            'email' => $email,
+                            'name' => '관리자',
+                            'roles' => ['admin'],
+                        ], 86400);
+                    }
+                    return $token;
+                }
+            };
         });
         $authService = app(\App\Services\BuiltinAuthService::class);
         $this->adminToken = $authService->login('admin@test.com', 'test-password');
@@ -42,14 +67,14 @@ class AgentRoomTest extends TestCase
     public function test_rooms_index_returns_categorized_rooms(): void
     {
         // 내 대화 (admin-builtin에 배정됨)
-        $myRoom = $this->createRoom(['assigned_agent_id' => 'admin-builtin']);
+        $myRoom = $this->createRoom(['assigned_agent_id' => $this->adminUuid]);
 
         // 대기 중 (미배정)
         $waitingRoom = $this->createRoom();
 
         // 종료된 방
         $closedRoom = $this->createRoom([
-            'assigned_agent_id' => 'admin-builtin',
+            'assigned_agent_id' => $this->adminUuid,
             'status' => 'closed',
             'closed_at' => now(),
         ]);
@@ -102,12 +127,12 @@ class AgentRoomTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.assigned_agent_id', 'admin-builtin');
+            ->assertJsonPath('data.assigned_agent_id', $this->adminUuid);
     }
 
     public function test_assign_already_assigned_room_returns_409(): void
     {
-        $room = $this->createRoom(['assigned_agent_id' => 'other-agent']);
+        $room = $this->createRoom(['assigned_agent_id' => '00000000-0000-0000-0000-000000000099']);
 
         $response = $this->postJson("/api/agent/rooms/{$room->id}/assign", [], [
             'Authorization' => 'Bearer ' . $this->adminToken,
@@ -120,7 +145,7 @@ class AgentRoomTest extends TestCase
 
     public function test_close_room(): void
     {
-        $room = $this->createRoom(['assigned_agent_id' => 'admin-builtin']);
+        $room = $this->createRoom(['assigned_agent_id' => $this->adminUuid]);
 
         $response = $this->postJson("/api/agent/rooms/{$room->id}/close", [], [
             'Authorization' => 'Bearer ' . $this->adminToken,
@@ -140,7 +165,7 @@ class AgentRoomTest extends TestCase
     public function test_transfer_room_to_another_agent(): void
     {
         $agent = $this->createAgent();
-        $room = $this->createRoom(['assigned_agent_id' => 'admin-builtin']);
+        $room = $this->createRoom(['assigned_agent_id' => $this->adminUuid]);
 
         $response = $this->postJson("/api/agent/rooms/{$room->id}/transfer", [
             'agent_id' => $agent->id,
@@ -154,7 +179,7 @@ class AgentRoomTest extends TestCase
 
     public function test_transfer_requires_agent_id(): void
     {
-        $room = $this->createRoom(['assigned_agent_id' => 'admin-builtin']);
+        $room = $this->createRoom(['assigned_agent_id' => $this->adminUuid]);
 
         $response = $this->postJson("/api/agent/rooms/{$room->id}/transfer", [], [
             'Authorization' => 'Bearer ' . $this->adminToken,
@@ -173,7 +198,7 @@ class AgentRoomTest extends TestCase
             $this->markTestSkipped('MongoDB 연결/인증 불가 — 테스트 환경에서 생략');
         }
 
-        $room = $this->createRoom(['assigned_agent_id' => 'admin-builtin']);
+        $room = $this->createRoom(['assigned_agent_id' => $this->adminUuid]);
 
         $response = $this->getJson("/api/agent/rooms/{$room->id}/messages", [
             'Authorization' => 'Bearer ' . $this->adminToken,
@@ -193,7 +218,7 @@ class AgentRoomTest extends TestCase
             $this->markTestSkipped('MongoDB 연결/인증 불가 — 테스트 환경에서 생략');
         }
 
-        $room = $this->createRoom(['assigned_agent_id' => 'admin-builtin']);
+        $room = $this->createRoom(['assigned_agent_id' => $this->adminUuid]);
 
         $response = $this->postJson("/api/agent/rooms/{$room->id}/messages", [
             'content' => '테스트 메시지입니다.',
@@ -208,7 +233,7 @@ class AgentRoomTest extends TestCase
 
     public function test_send_message_requires_content(): void
     {
-        $room = $this->createRoom(['assigned_agent_id' => 'admin-builtin']);
+        $room = $this->createRoom(['assigned_agent_id' => $this->adminUuid]);
 
         $response = $this->postJson("/api/agent/rooms/{$room->id}/messages", [], [
             'Authorization' => 'Bearer ' . $this->adminToken,

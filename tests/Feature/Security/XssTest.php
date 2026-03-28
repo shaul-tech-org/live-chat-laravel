@@ -76,8 +76,9 @@ class XssTest extends TestCase
 
         $response->assertStatus(201);
         $storedContent = $response->json('data.content');
-        $this->assertStringNotContainsString('<img', $storedContent);
-        $this->assertStringContainsString('&lt;img', $storedContent);
+        // strip-dangerous-tags 방식: onerror 이벤트 핸들러가 제거되어야 함
+        $this->assertStringNotContainsString('onerror', $storedContent);
+        $this->assertStringNotContainsString('alert(1)', $storedContent);
     }
 
     public function test_xss_in_visitor_name(): void

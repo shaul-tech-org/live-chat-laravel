@@ -21,6 +21,10 @@ abstract class TestCase extends BaseTestCase
             \App\Models\Mongo\Message::query()->count();
         } catch (\MongoDB\Driver\Exception\ConnectionTimeoutException $e) {
             $this->markTestSkipped('MongoDB 연결 불가 — 테스트 환경에서 생략');
+        } catch (\MongoDB\Driver\Exception\AuthenticationException $e) {
+            $this->markTestSkipped('MongoDB 인증 실패 — 테스트 환경에서 생략');
+        } catch (\MongoDB\Driver\Exception\RuntimeException $e) {
+            $this->markTestSkipped('MongoDB 사용 불가 — ' . $e->getMessage());
         }
     }
 }

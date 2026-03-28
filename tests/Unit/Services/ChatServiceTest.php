@@ -37,6 +37,8 @@ class ChatServiceTest extends TestCase
             Message::query()->forceDelete();
         } catch (\MongoDB\Driver\Exception\ConnectionTimeoutException $e) {
             // MongoDB 미연결 환경 (테스트 환경) — 무시
+        } catch (\MongoDB\Driver\Exception\RuntimeException $e) {
+            // MongoDB 인증 실패 등 (테스트 환경) — 무시
         }
         parent::tearDown();
     }
@@ -157,9 +159,9 @@ class ChatServiceTest extends TestCase
         $messages = $this->chatService->getHistory($roomId, 50);
 
         $this->assertCount(2, $messages);
-        // Ordered by created_at desc (newest first)
-        $this->assertEquals('두 번째', $messages[0]->content);
-        $this->assertEquals('첫 번째', $messages[1]->content);
+        // Ordered by created_at asc (oldest first) — reverse() 적용
+        $this->assertEquals('첫 번째', $messages[0]->content);
+        $this->assertEquals('두 번째', $messages[1]->content);
     }
 
     public function test_get_history_respects_limit(): void

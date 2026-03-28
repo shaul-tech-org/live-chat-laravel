@@ -47,6 +47,8 @@ class WebSocketEventTest extends TestCase
             Message::where('room_id', $this->room->id)->forceDelete();
         } catch (\MongoDB\Driver\Exception\ConnectionTimeoutException $e) {
             // MongoDB 미연결 환경 — 무시
+        } catch (\MongoDB\Driver\Exception\RuntimeException $e) {
+            // MongoDB 인증 실패 등 (테스트 환경) — 무시
         }
         parent::tearDown();
     }

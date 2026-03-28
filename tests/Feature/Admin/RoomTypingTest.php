@@ -85,7 +85,7 @@ class RoomTypingTest extends TestCase
             $this->markTestSkipped('Built-in auth not configured');
         }
 
-        $response = $this->postJson('/api/admin/rooms/nonexistent-id/typing', [
+        $response = $this->postJson('/api/admin/rooms/00000000-0000-0000-0000-000000000000/typing', [
             'sender_name' => '상담사',
         ], ['Authorization' => 'Bearer ' . $token]);
 
