@@ -89,7 +89,7 @@ jobs:
           QUEUE_CONNECTION: sync
           CACHE_STORE: array
           SESSION_DRIVER: array
-        run: php artisan test --parallel
+        run: php artisan test
 
   # ===========================================
   # CI: Frontend Build (Vite)
