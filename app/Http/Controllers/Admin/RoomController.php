@@ -58,13 +58,16 @@ class RoomController extends Controller
         $validated = $request->validate([
             'content' => 'required|string|max:5000',
             'sender_name' => 'nullable|string|max:100',
+            'content_type' => 'nullable|string|in:text,image,file',
+            'file_url' => 'nullable|string|max:500',
         ]);
 
         $message = $this->chatService->sendMessage($room, [
             'sender_type' => 'agent',
             'sender_name' => $validated['sender_name'] ?? '상담사',
             'content' => $validated['content'],
-            'content_type' => 'text',
+            'content_type' => $validated['content_type'] ?? 'text',
+            'file_url' => $validated['file_url'] ?? null,
         ]);
 
         return ApiResponse::success(new MessageResource($message));

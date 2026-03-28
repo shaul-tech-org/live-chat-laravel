@@ -69,6 +69,9 @@ Route::middleware(['admin.auth', 'xss', 'throttle:admin-api'])->prefix('agent')-
 
 // Admin (Built-in / Keycloak auth + XSS + admin rate limit)
 Route::middleware(['admin.auth', 'xss', 'throttle:admin-api'])->prefix('admin')->group(function () {
+    // Upload
+    Route::post('/upload', [Api\UploadController::class, 'store']);
+
     // Rooms
     Route::get('/rooms', [Admin\RoomController::class, 'index']);
     Route::patch('/rooms/{id}', [Admin\RoomController::class, 'update']);
