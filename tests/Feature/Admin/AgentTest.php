@@ -4,12 +4,12 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Agent;
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class AgentTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private Tenant $tenant;
 

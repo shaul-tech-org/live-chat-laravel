@@ -10,14 +10,14 @@ use App\Models\Agent;
 use App\Models\ChatRoom;
 use App\Models\Tenant;
 use App\Services\RoutingService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class RoutingServiceTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private RoutingService $routingService;
     private Tenant $tenant;

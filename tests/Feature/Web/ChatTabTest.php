@@ -5,12 +5,12 @@ namespace Tests\Feature\Web;
 use App\Models\Agent;
 use App\Models\ChatRoom;
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class ChatTabTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private string $adminToken = '';
     private Tenant $tenant;

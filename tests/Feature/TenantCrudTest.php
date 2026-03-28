@@ -3,12 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class TenantCrudTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_create_tenant(): void
     {

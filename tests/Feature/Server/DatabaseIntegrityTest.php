@@ -7,14 +7,14 @@ use App\Models\ChatRoom;
 use App\Models\Feedback;
 use App\Models\FaqEntry;
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class DatabaseIntegrityTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_soft_delete_sets_deleted_at(): void
     {

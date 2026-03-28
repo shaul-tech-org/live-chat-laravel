@@ -4,12 +4,12 @@ namespace Tests\Feature\Api;
 
 use App\Models\ChatRoom;
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class TranscriptTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private string $apiKey;
     private Tenant $tenant;

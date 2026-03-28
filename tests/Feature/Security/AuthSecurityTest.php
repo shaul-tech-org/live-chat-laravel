@@ -4,14 +4,14 @@ namespace Tests\Feature\Security;
 
 use App\Models\Tenant;
 use App\Services\BuiltinAuthService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AuthSecurityTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private Tenant $tenant;
     private string $apiKey;

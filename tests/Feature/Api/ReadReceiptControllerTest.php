@@ -5,13 +5,13 @@ namespace Tests\Feature\Api;
 use App\Events\MessageRead;
 use App\Models\ChatRoom;
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class ReadReceiptControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private Tenant $tenant;
     private ChatRoom $room;

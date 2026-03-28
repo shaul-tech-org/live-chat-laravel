@@ -3,12 +3,12 @@
 namespace Tests\Feature\Middleware;
 
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class ApiKeyAuthTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private string $apiKey;
 

@@ -9,12 +9,12 @@ use App\Models\Mongo\Message;
 use App\Models\Tenant;
 use App\Services\ChatService;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class ChatServiceTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private ChatService $chatService;
     private Tenant $tenant;

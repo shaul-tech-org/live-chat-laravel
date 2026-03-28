@@ -9,13 +9,13 @@ use App\Events\TypingStarted;
 use App\Models\ChatRoom;
 use App\Models\Mongo\Message;
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class WebSocketEventTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private Tenant $tenant;
     private ChatRoom $room;

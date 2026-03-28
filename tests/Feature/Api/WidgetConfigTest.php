@@ -3,12 +3,12 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class WidgetConfigTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_get_config_with_valid_key(): void
     {

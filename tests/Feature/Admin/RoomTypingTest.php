@@ -5,13 +5,13 @@ namespace Tests\Feature\Admin;
 use App\Events\TypingStarted;
 use App\Models\ChatRoom;
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class RoomTypingTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private Tenant $tenant;
 

@@ -5,12 +5,12 @@ namespace Tests\Feature\Security;
 use App\Models\ChatRoom;
 use App\Models\Feedback;
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class XssTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private Tenant $tenant;
     private ChatRoom $room;

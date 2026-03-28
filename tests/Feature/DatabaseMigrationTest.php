@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class DatabaseMigrationTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_tenants_table_exists(): void
     {

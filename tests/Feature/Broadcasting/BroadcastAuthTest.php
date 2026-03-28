@@ -6,12 +6,12 @@ use App\Models\Agent;
 use App\Models\ChatRoom;
 use App\Models\Tenant;
 use App\Services\BuiltinAuthService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class BroadcastAuthTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     private Tenant $tenant;
     private ChatRoom $room;

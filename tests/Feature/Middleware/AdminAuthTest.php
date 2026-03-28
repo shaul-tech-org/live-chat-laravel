@@ -2,12 +2,12 @@
 
 namespace Tests\Feature\Middleware;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class AdminAuthTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_admin_route_without_token_returns_401(): void
     {
