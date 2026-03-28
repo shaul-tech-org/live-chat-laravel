@@ -6,7 +6,13 @@
  *           data-api-key="YOUR_API_KEY"
  *           data-reverb-key="YOUR_REVERB_KEY"
  *           data-reverb-host="chat.shaul.kr"
- *           data-reverb-port="443"></script>
+ *           data-reverb-port="443"
+ *           data-lang="ko"
+ *           data-color="#4F46E5"
+ *           data-position="bottom-right"
+ *           data-title="실시간 채팅"
+ *           data-greeting="무엇을 도와드릴까요?"
+ *           data-logo="https://example.com/logo.png"></script>
  */
 (function () {
     'use strict';
@@ -30,6 +36,38 @@
         baseUrl: script?.src ? new URL(script.src).origin : '',
     };
 
+    /* ── Branding Config ──────────────────────────────────────── */
+    var DEFAULT_COLOR = '#4F46E5';
+    var branding = {
+        color: script?.getAttribute('data-color') || DEFAULT_COLOR,
+        position: script?.getAttribute('data-position') || 'bottom-right',
+        title: script?.getAttribute('data-title') || '',
+        greeting: script?.getAttribute('data-greeting') || '',
+        logo: script?.getAttribute('data-logo') || '',
+    };
+
+    /* Compute a darker hover shade from the primary color */
+    function darkenColor(hex, amount) {
+        hex = hex.replace('#', '');
+        if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+        var r = Math.max(0, parseInt(hex.substring(0,2), 16) - amount);
+        var g = Math.max(0, parseInt(hex.substring(2,4), 16) - amount);
+        var b = Math.max(0, parseInt(hex.substring(4,6), 16) - amount);
+        return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    function hexToRgba(hex, alpha) {
+        hex = hex.replace('#', '');
+        if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+        var r = parseInt(hex.substring(0,2), 16);
+        var g = parseInt(hex.substring(2,4), 16);
+        var b = parseInt(hex.substring(4,6), 16);
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+    }
+
+    var isLeftPosition = branding.position === 'bottom-left';
+    var positionSide = isLeftPosition ? 'left' : 'right';
+
     /* ── State ──────────────────────────────────────────────── */
     var state = {
         open: false,
@@ -48,7 +86,108 @@
         connectionStatus: 'offline', /* 'online' | 'reconnecting' | 'offline' */
         agentsOnline: null, /* null = unknown, 0 = offline, >0 = online */
         visitorEmail: localStorage.getItem(LS_EMAIL) || '',
+        lang: 'ko',
     };
+
+    /* ── i18n ──────────────────────────────────────────────── */
+    var LANGS = {
+        ko: {
+            title: '실시간 채팅', greeting: '무엇을 도와드릴까요?',
+            greetingDesc: '궁금한 점을 선택하거나 이름을 입력해 상담을 시작하세요.',
+            responseHint: '보통 2분 이내 응답', nameInput: '이름 입력',
+            startBtn: '시작', msgPlaceholder: '메시지를 입력하세요...',
+            topicGeneral: '일반 문의', topicQuote: '견적 요청', topicSupport: '기술 지원',
+            or: '또는', offline: '오프라인', reconnecting: '재연결 중...',
+            offlineTitle: '현재 상담사가 부재중입니다',
+            offlineDesc: '이메일과 메시지를 남겨주시면\n빠른 시간 내 답변드리겠습니다.',
+            offlineEmail: '이메일 주소 (필수)', offlineMsg: '메시지를 입력하세요...',
+            offlineSubmit: '메시지 남기기',
+            offlineSuccess: '메시지가 전송되었습니다',
+            offlineSuccessDesc: '빠른 시간 내 {email}으로 답변드리겠습니다.',
+            offlineError: '전송에 실패했습니다. 다시 시도해주세요.',
+            openChat: '채팅 열기', close: '닫기',
+            attachFile: '파일 첨부', sendMsg: '보내기',
+            uploading: '업로드 중...', uploadPct: '업로드 중... {pct}%',
+            cancel: '취소', dropFile: '파일을 놓아주세요',
+            image: '이미지', file: '파일',
+            sendFailed: '메시지 전송에 실패했습니다.',
+            fileSizeLimit: '파일 크기는 10MB를 초과할 수 없습니다.',
+            uploadResponseError: '파일 업로드 응답을 처리할 수 없습니다.',
+            uploadFailed: '파일 업로드에 실패했습니다.',
+            uploadError: '파일 업로드 중 오류가 발생했습니다.',
+            fileMsgFailed: '파일 메시지 전송에 실패했습니다.',
+            connectFailed: '연결에 실패했습니다. 다시 시도해주세요.',
+            visitor: '방문자',
+        },
+        en: {
+            title: 'Live Chat', greeting: 'How can we help?',
+            greetingDesc: 'Choose a topic or enter your name to start.',
+            responseHint: 'Usually responds in 2 min', nameInput: 'Your name',
+            startBtn: 'Start', msgPlaceholder: 'Type a message...',
+            topicGeneral: 'General', topicQuote: 'Quote', topicSupport: 'Support',
+            or: 'or', offline: 'Offline', reconnecting: 'Reconnecting...',
+            offlineTitle: 'We are currently offline',
+            offlineDesc: 'Leave your email and message,\nand we\'ll get back to you shortly.',
+            offlineEmail: 'Email (required)', offlineMsg: 'Your message...',
+            offlineSubmit: 'Leave a message',
+            offlineSuccess: 'Message sent',
+            offlineSuccessDesc: 'We\'ll reply to {email} shortly.',
+            offlineError: 'Failed to send. Please try again.',
+            openChat: 'Open chat', close: 'Close',
+            attachFile: 'Attach file', sendMsg: 'Send',
+            uploading: 'Uploading...', uploadPct: 'Uploading... {pct}%',
+            cancel: 'Cancel', dropFile: 'Drop file here',
+            image: 'Image', file: 'File',
+            sendFailed: 'Failed to send message.',
+            fileSizeLimit: 'File size cannot exceed 10MB.',
+            uploadResponseError: 'Could not process upload response.',
+            uploadFailed: 'File upload failed.',
+            uploadError: 'An error occurred during file upload.',
+            fileMsgFailed: 'Failed to send file message.',
+            connectFailed: 'Connection failed. Please try again.',
+            visitor: 'Visitor',
+        },
+        ja: {
+            title: 'ライブチャット', greeting: 'お手伝いできますか？',
+            greetingDesc: 'トピックを選択するか、名前を入力して開始してください。',
+            responseHint: '通常2分以内に応答', nameInput: 'お名前',
+            startBtn: '開始', msgPlaceholder: 'メッセージを入力...',
+            topicGeneral: '一般的な問い合わせ', topicQuote: '見積もり依頼', topicSupport: '技術サポート',
+            or: 'または', offline: 'オフライン', reconnecting: '再接続中...',
+            offlineTitle: '現在オペレーターは不在です',
+            offlineDesc: 'メールアドレスとメッセージを残していただければ\nすぐにご返信いたします。',
+            offlineEmail: 'メールアドレス（必須）', offlineMsg: 'メッセージを入力してください...',
+            offlineSubmit: 'メッセージを残す',
+            offlineSuccess: 'メッセージが送信されました',
+            offlineSuccessDesc: 'まもなく{email}にご返信いたします。',
+            offlineError: '送信に失敗しました。もう一度お試しください。',
+            openChat: 'チャットを開く', close: '閉じる',
+            attachFile: 'ファイル添付', sendMsg: '送信',
+            uploading: 'アップロード中...', uploadPct: 'アップロード中... {pct}%',
+            cancel: 'キャンセル', dropFile: 'ここにファイルをドロップ',
+            image: '画像', file: 'ファイル',
+            sendFailed: 'メッセージの送信に失敗しました。',
+            fileSizeLimit: 'ファイルサイズは10MBを超えることはできません。',
+            uploadResponseError: 'アップロード応答を処理できませんでした。',
+            uploadFailed: 'ファイルのアップロードに失敗しました。',
+            uploadError: 'ファイルアップロード中にエラーが発生しました。',
+            fileMsgFailed: 'ファイルメッセージの送信に失敗しました。',
+            connectFailed: '接続に失敗しました。もう一度お試しください。',
+            visitor: '訪問者',
+        },
+    };
+
+    /* Detect language: data-lang attribute > navigator.language > 'ko' */
+    (function detectLang() {
+        var attr = script?.getAttribute('data-lang');
+        if (attr && LANGS[attr]) { state.lang = attr; return; }
+        var nav = (navigator.language || navigator.userLanguage || '').toLowerCase();
+        if (nav.indexOf('ja') === 0) { state.lang = 'ja'; return; }
+        if (nav.indexOf('en') === 0) { state.lang = 'en'; return; }
+        state.lang = 'ko';
+    })();
+
+    function t(key) { return (LANGS[state.lang] || LANGS.ko)[key] || key; }
 
     /* ── Dark Mode Detection ───────────────────────────────── */
     var mql = window.matchMedia('(prefers-color-scheme: dark)');
@@ -253,7 +392,7 @@
         bubble = document.createElement('div');
         bubble.className = 'lchat-bubble';
         bubble.innerHTML = ICON_CHAT;
-        bubble.setAttribute('aria-label', '채팅 열기');
+        bubble.setAttribute('aria-label', t('openChat'));
         badge = document.createElement('div');
         badge.className = 'lchat-badge lchat-hidden';
         badge.textContent = '0';
@@ -278,13 +417,13 @@
         statusDot.className = 'lchat-status-dot';
         var title = document.createElement('div');
         title.className = 'lchat-header-title';
-        title.textContent = '실시간 채팅';
+        title.textContent = t('title');
         headerLeft.appendChild(statusDot);
         headerLeft.appendChild(title);
         var closeBtn = document.createElement('button');
         closeBtn.className = 'lchat-close-btn';
         closeBtn.innerHTML = ICON_CLOSE;
-        closeBtn.setAttribute('aria-label', '닫기');
+        closeBtn.setAttribute('aria-label', t('close'));
         header.appendChild(headerLeft);
         header.appendChild(closeBtn);
         panel.appendChild(header);
@@ -301,34 +440,34 @@
 
         var prechatTitle = document.createElement('div');
         prechatTitle.className = 'lchat-prechat-title';
-        prechatTitle.textContent = '무엇을 도와드릴까요?';
+        prechatTitle.textContent = t('greeting');
         prechatEl.appendChild(prechatTitle);
 
         var prechatDesc = document.createElement('div');
         prechatDesc.className = 'lchat-prechat-desc';
-        prechatDesc.textContent = '궁금한 점을 선택하거나 이름을 입력해 상담을 시작하세요.';
+        prechatDesc.textContent = t('greetingDesc');
         prechatEl.appendChild(prechatDesc);
 
         /* Response time */
         var responseHint = document.createElement('div');
         responseHint.className = 'lchat-prechat-response';
-        responseHint.textContent = '보통 2분 이내 응답';
+        responseHint.textContent = t('responseHint');
         prechatEl.appendChild(responseHint);
 
         /* Quick topic buttons */
         var topics = document.createElement('div');
         topics.className = 'lchat-prechat-topics';
         var topicList = [
-            { icon: '💬', label: '일반 문의' },
-            { icon: '📋', label: '견적 요청' },
-            { icon: '🛠', label: '기술 지원' },
+            { icon: '💬', key: 'topicGeneral' },
+            { icon: '📋', key: 'topicQuote' },
+            { icon: '🛠', key: 'topicSupport' },
         ];
-        topicList.forEach(function (t) {
+        topicList.forEach(function (tp) {
             var btn = document.createElement('button');
             btn.className = 'lchat-topic-btn';
-            btn.innerHTML = '<span class="lchat-topic-icon">' + t.icon + '</span>' + t.label;
+            btn.innerHTML = '<span class="lchat-topic-icon">' + tp.icon + '</span>' + t(tp.key);
             btn.addEventListener('click', function () {
-                startWithTopic(t.label);
+                startWithTopic(t(tp.key));
             });
             topics.appendChild(btn);
         });
@@ -337,7 +476,7 @@
         /* Divider */
         var divider = document.createElement('div');
         divider.className = 'lchat-prechat-divider';
-        divider.textContent = '또는';
+        divider.textContent = t('or');
         prechatEl.appendChild(divider);
 
         /* Name input row */
@@ -345,13 +484,13 @@
         formRow.className = 'lchat-prechat-form';
         prechatInput = document.createElement('input');
         prechatInput.type = 'text';
-        prechatInput.placeholder = '이름 입력';
+        prechatInput.placeholder = t('nameInput');
         prechatInput.maxLength = 50;
         prechatInput.setAttribute('autocomplete', 'one-time-code');
         prechatInput.setAttribute('enterkeyhint', 'go');
         prechatBtn = document.createElement('button');
         prechatBtn.className = 'lchat-prechat-btn';
-        prechatBtn.textContent = '시작';
+        prechatBtn.textContent = t('startBtn');
         formRow.appendChild(prechatInput);
         formRow.appendChild(prechatBtn);
         prechatEl.appendChild(formRow);
@@ -369,12 +508,12 @@
 
         var offlineTitle = document.createElement('div');
         offlineTitle.className = 'lchat-offline-title';
-        offlineTitle.textContent = '\uD604\uC7AC \uC0C1\uB2F4\uC0AC\uAC00 \uBD80\uC7AC\uC911\uC785\uB2C8\uB2E4';
+        offlineTitle.textContent = t('offlineTitle');
         offlineEl.appendChild(offlineTitle);
 
         var offlineDesc = document.createElement('div');
         offlineDesc.className = 'lchat-offline-desc';
-        offlineDesc.textContent = '\uC774\uBA54\uC77C\uACFC \uBA54\uC2DC\uC9C0\uB97C \uB0A8\uACA8\uC8FC\uC2DC\uBA74\n\uBE60\uB978 \uC2DC\uAC04 \uB0B4 \uB2F4\uBCC0\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4.';
+        offlineDesc.textContent = t('offlineDesc');
         offlineEl.appendChild(offlineDesc);
 
         var offlineForm = document.createElement('div');
@@ -382,19 +521,19 @@
 
         offlineEmailInput = document.createElement('input');
         offlineEmailInput.type = 'email';
-        offlineEmailInput.placeholder = '\uC774\uBA54\uC77C \uC8FC\uC18C (\uD544\uC218)';
+        offlineEmailInput.placeholder = t('offlineEmail');
         offlineEmailInput.required = true;
         offlineEmailInput.setAttribute('autocomplete', 'email');
         offlineForm.appendChild(offlineEmailInput);
 
         offlineMessageInput = document.createElement('textarea');
-        offlineMessageInput.placeholder = '\uBA54\uC2DC\uC9C0\uB97C \uC785\uB825\uD558\uC138\uC694...';
+        offlineMessageInput.placeholder = t('offlineMsg');
         offlineMessageInput.required = true;
         offlineForm.appendChild(offlineMessageInput);
 
         offlineSubmitBtn = document.createElement('button');
         offlineSubmitBtn.className = 'lchat-offline-btn';
-        offlineSubmitBtn.textContent = '\uBA54\uC2DC\uC9C0 \uB0A8\uAE30\uAE30';
+        offlineSubmitBtn.textContent = t('offlineSubmit');
         offlineForm.appendChild(offlineSubmitBtn);
 
         offlineEl.appendChild(offlineForm);
@@ -418,9 +557,9 @@
         /* Upload progress bar (inserted before input area) */
         uploadProgressEl = document.createElement('div');
         uploadProgressEl.className = 'lchat-upload-progress lchat-hidden';
-        uploadProgressEl.innerHTML = '<span class="lchat-upload-progress-label">업로드 중...</span>' +
+        uploadProgressEl.innerHTML = '<span class="lchat-upload-progress-label">' + t('uploading') + '</span>' +
             '<div class="lchat-upload-progress-bar"><div class="lchat-upload-progress-fill" style="width:0%"></div></div>' +
-            '<button class="lchat-upload-cancel" aria-label="취소">&#10005;</button>';
+            '<button class="lchat-upload-cancel" aria-label="' + t('cancel') + '">&#10005;</button>';
         panel.appendChild(uploadProgressEl);
 
         /* Input area */
@@ -437,19 +576,19 @@
         attachBtn = document.createElement('button');
         attachBtn.className = 'lchat-attach-btn';
         attachBtn.innerHTML = ICON_ATTACH;
-        attachBtn.setAttribute('aria-label', '파일 첨부');
+        attachBtn.setAttribute('aria-label', t('attachFile'));
 
         textarea = document.createElement('div');
         textarea.className = 'lchat-textarea';
         textarea.setAttribute('contenteditable', 'true');
         textarea.setAttribute('role', 'textbox');
-        textarea.setAttribute('aria-label', '메시지 입력');
-        textarea.setAttribute('data-placeholder', '메시지를 입력하세요...');
+        textarea.setAttribute('aria-label', t('msgPlaceholder'));
+        textarea.setAttribute('data-placeholder', t('msgPlaceholder'));
         textarea.setAttribute('enterkeyhint', 'send');
         sendBtn = document.createElement('button');
         sendBtn.className = 'lchat-send-btn';
         sendBtn.innerHTML = ICON_SEND;
-        sendBtn.setAttribute('aria-label', '보내기');
+        sendBtn.setAttribute('aria-label', t('sendMsg'));
         inputArea.appendChild(fileInput);
         inputArea.appendChild(attachBtn);
         inputArea.appendChild(textarea);
@@ -459,7 +598,7 @@
         /* Drag & drop overlay */
         dragOverlay = document.createElement('div');
         dragOverlay.className = 'lchat-drag-overlay lchat-hidden';
-        dragOverlay.innerHTML = '<span class="lchat-drag-overlay-text">파일을 놓아주세요</span>';
+        dragOverlay.innerHTML = '<span class="lchat-drag-overlay-text">' + t('dropFile') + '</span>';
         panel.appendChild(dragOverlay);
         panel.style.position = panel.style.position || 'fixed';
 
@@ -479,10 +618,10 @@
     }
 
     /* ── Connection Status ──────────────────────────────────── */
-    var STATUS_LABELS = {
-        online: '실시간 채팅',
-        reconnecting: '재연결 중...',
-        offline: '오프라인',
+    var STATUS_I18N_KEYS = {
+        online: 'title',
+        reconnecting: 'reconnecting',
+        offline: 'offline',
     };
 
     function updateConnectionStatus(status) {
@@ -490,12 +629,12 @@
         state.connectionStatus = status;
 
         var dot = root && root.querySelector('.lchat-status-dot');
-        var title = root && root.querySelector('.lchat-header-title');
-        if (!dot || !title) return;
+        var titleEl = root && root.querySelector('.lchat-header-title');
+        if (!dot || !titleEl) return;
 
         dot.classList.remove('lchat-online', 'lchat-reconnecting', 'lchat-offline');
         dot.classList.add('lchat-' + status);
-        title.textContent = STATUS_LABELS[status] || STATUS_LABELS.offline;
+        titleEl.textContent = t(STATUS_I18N_KEYS[status] || 'offline');
     }
 
     /* ── UI Helpers ─────────────────────────────────────────── */
@@ -609,7 +748,8 @@
     function formatTime(dateStr) {
         try {
             var d = new Date(dateStr);
-            return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+            var localeMap = { ko: 'ko-KR', en: 'en-US', ja: 'ja-JP' };
+            return d.toLocaleTimeString(localeMap[state.lang] || 'ko-KR', { hour: '2-digit', minute: '2-digit' });
         } catch (_) {
             return '';
         }
@@ -636,7 +776,7 @@
             var img = document.createElement('img');
             img.className = 'lchat-msg-image';
             img.src = resolveFileUrl(msg.file_url);
-            img.alt = msg.content || '이미지';
+            img.alt = msg.content || t('image');
             img.loading = 'lazy';
             img.addEventListener('click', function () {
                 openImageOverlay(img.src);
@@ -661,7 +801,7 @@
 
             var fname = document.createElement('div');
             fname.className = 'lchat-msg-file-name';
-            fname.textContent = msg.content || '파일';
+            fname.textContent = msg.content || t('file');
             info.appendChild(fname);
 
             if (msg.file_size) {
@@ -891,7 +1031,7 @@
         })
         .catch(function (err) {
             logError(err);
-            appendSystemMsg('메시지 전송에 실패했습니다.');
+            appendSystemMsg(t('sendFailed'));
         })
         .finally(function () {
             sendBtn.disabled = false;
@@ -932,7 +1072,7 @@
         if (!state.roomId) return;
 
         if (file.size > 10 * 1024 * 1024) {
-            appendSystemMsg('파일 크기는 10MB를 초과할 수 없습니다.');
+            appendSystemMsg(t('fileSizeLimit'));
             return;
         }
 
@@ -943,7 +1083,7 @@
         var fillEl = uploadProgressEl.querySelector('.lchat-upload-progress-fill');
         var labelEl = uploadProgressEl.querySelector('.lchat-upload-progress-label');
         fillEl.style.width = '0%';
-        labelEl.textContent = '업로드 중... 0%';
+        labelEl.textContent = t('uploadPct').replace('{pct}', '0');
         attachBtn.disabled = true;
 
         var formData = new FormData();
@@ -956,7 +1096,7 @@
             if (e.lengthComputable) {
                 var pct = Math.round((e.loaded / e.total) * 100);
                 fillEl.style.width = pct + '%';
-                labelEl.textContent = '업로드 중... ' + pct + '%';
+                labelEl.textContent = t('uploadPct').replace('{pct}', pct);
             }
         });
 
@@ -972,10 +1112,10 @@
                     sendFileMessage(data, contentType, file.name, file.size);
                 } catch (err) {
                     logError(err);
-                    appendSystemMsg('파일 업로드 응답을 처리할 수 없습니다.');
+                    appendSystemMsg(t('uploadResponseError'));
                 }
             } else {
-                appendSystemMsg('파일 업로드에 실패했습니다.');
+                appendSystemMsg(t('uploadFailed'));
             }
         });
 
@@ -983,7 +1123,7 @@
             currentUploadXhr = null;
             uploadProgressEl.classList.add('lchat-hidden');
             attachBtn.disabled = false;
-            appendSystemMsg('파일 업로드 중 오류가 발생했습니다.');
+            appendSystemMsg(t('uploadError'));
         });
 
         xhr.addEventListener('abort', function () {
@@ -1046,7 +1186,7 @@
         })
         .catch(function (err) {
             logError(err);
-            appendSystemMsg('파일 메시지 전송에 실패했습니다.');
+            appendSystemMsg(t('fileMsgFailed'));
         });
     }
 
@@ -1427,7 +1567,7 @@
             })
             .catch(function (err) {
                 logError(err);
-                appendSystemMsg('연결에 실패했습니다. 다시 시도해주세요.');
+                appendSystemMsg(t('connectFailed'));
                 prechatBtn.disabled = false;
             });
     }
@@ -1484,12 +1624,12 @@
                 var successTitle = document.createElement('div');
                 successTitle.className = 'lchat-offline-title';
                 successTitle.style.marginTop = '12px';
-                successTitle.textContent = '\uBA54\uC2DC\uC9C0\uAC00 \uC804\uC1A1\uB418\uC5C8\uC2B5\uB2C8\uB2E4';
+                successTitle.textContent = t('offlineSuccess');
                 offlineEl.appendChild(successTitle);
 
                 var successDesc = document.createElement('div');
                 successDesc.className = 'lchat-offline-desc';
-                successDesc.textContent = '\uBE60\uB978 \uC2DC\uAC04 \uB0B4 ' + email + '\uC73C\uB85C \uB2F4\uBCC0\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4.';
+                successDesc.textContent = t('offlineSuccessDesc').replace('{email}', email);
                 offlineEl.appendChild(successDesc);
             })
             .catch(function (err) {
@@ -1501,13 +1641,13 @@
                 var errMsg = document.createElement('div');
                 errMsg.className = 'lchat-offline-success';
                 errMsg.style.color = '#DC2626';
-                errMsg.textContent = '\uC804\uC1A1\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.';
+                errMsg.textContent = t('offlineError');
                 offlineEl.appendChild(errMsg);
             });
     }
 
     function startWithTopic(topic) {
-        state.visitorName = '방문자';
+        state.visitorName = t('visitor');
         localStorage.setItem(LS_NAME, state.visitorName);
 
         createRoom()
@@ -1535,7 +1675,7 @@
             })
             .catch(function (err) {
                 logError(err);
-                appendSystemMsg('연결에 실패했습니다. 다시 시도해주세요.');
+                appendSystemMsg(t('connectFailed'));
             });
     }
 
