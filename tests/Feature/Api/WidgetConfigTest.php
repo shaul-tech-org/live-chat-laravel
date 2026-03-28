@@ -100,6 +100,51 @@ class WidgetConfigTest extends TestCase
             ->assertJsonCount(3, 'data.prechat_fields'); // 기본 3개 필드
     }
 
+    public function test_get_config_includes_branding_settings(): void
+    {
+        $apiKey = 'ck_live_' . bin2hex(random_bytes(16));
+        Tenant::create([
+            'name' => 'Branding Tenant',
+            'api_key' => $apiKey,
+            'owner_id' => 'owner-brand',
+            'widget_config' => [
+                'primary_color' => '#FF6B35',
+                'position' => 'bottom-left',
+                'title' => 'Help Center',
+                'greeting' => 'How can we assist you?',
+                'logo_url' => 'https://example.com/logo.png',
+            ],
+        ]);
+
+        $response = $this->getJson("/api/widget/config?api_key={$apiKey}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.widget_config.primary_color', '#FF6B35')
+            ->assertJsonPath('data.widget_config.position', 'bottom-left')
+            ->assertJsonPath('data.widget_config.title', 'Help Center')
+            ->assertJsonPath('data.widget_config.greeting', 'How can we assist you?')
+            ->assertJsonPath('data.widget_config.logo_url', 'https://example.com/logo.png');
+    }
+
+    public function test_get_config_branding_defaults_to_null_when_not_set(): void
+    {
+        $apiKey = 'ck_live_' . bin2hex(random_bytes(16));
+        Tenant::create([
+            'name' => 'No Branding Tenant',
+            'api_key' => $apiKey,
+            'owner_id' => 'owner-nobrand',
+        ]);
+
+        $response = $this->getJson("/api/widget/config?api_key={$apiKey}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.widget_config.primary_color', null)
+            ->assertJsonPath('data.widget_config.position', null)
+            ->assertJsonPath('data.widget_config.title', null)
+            ->assertJsonPath('data.widget_config.greeting', null)
+            ->assertJsonPath('data.widget_config.logo_url', null);
+    }
+
     public function test_business_hours_disabled_returns_within_hours_true(): void
     {
         $apiKey = 'ck_live_' . bin2hex(random_bytes(16));

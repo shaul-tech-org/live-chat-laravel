@@ -14,7 +14,13 @@ class WidgetConfigResource extends JsonResource
         $config = $this->widget_config ?? [];
 
         return [
-            'widget_config' => (object) $config,
+            'widget_config' => array_merge([
+                'primary_color' => $config['primary_color'] ?? null,
+                'position' => $config['position'] ?? null,
+                'title' => $config['title'] ?? null,
+                'greeting' => $config['greeting'] ?? null,
+                'logo_url' => $config['logo_url'] ?? null,
+            ], (array) ($config ?: [])),
             'prechat_fields' => $config['prechat_fields'] ?? $this->defaultPrechatFields(),
             'business_hours' => $config['business_hours'] ?? null,
             'is_within_business_hours' => $this->calculateIsWithinBusinessHours($config),
