@@ -40,7 +40,7 @@
     </nav>
 
     {{-- 탭 콘텐츠 --}}
-    <main class="flex-1 overflow-hidden">
+    <main class="flex-1 overflow-hidden relative">
         @yield('content')
     </main>
 </div>
