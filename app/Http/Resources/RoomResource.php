@@ -15,6 +15,7 @@ class RoomResource extends JsonResource
             'visitor_id' => $this->visitor_id,
             'visitor_name' => $this->visitor_name,
             'visitor_email' => $this->visitor_email,
+            'visitor_phone' => $this->visitor_phone,
             'status' => $this->status,
             'assigned_agent_id' => $this->assigned_agent_id,
             'assigned_agent_name' => $this->whenLoaded('assignedAgent', fn () => $this->assignedAgent?->name),

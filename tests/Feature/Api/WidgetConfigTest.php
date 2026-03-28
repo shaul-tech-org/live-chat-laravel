@@ -20,12 +20,22 @@ class WidgetConfigTest extends TestCase
             'widget_config' => [
                 'primary_color' => '#4F46E5',
                 'position' => 'bottom-right',
+                'prechat_fields' => [
+                    ['name' => 'name', 'label' => '이름', 'type' => 'text', 'required' => true],
+                    ['name' => 'email', 'label' => '이메일', 'type' => 'email', 'required' => false],
+                    ['name' => 'phone', 'label' => '전화번호', 'type' => 'tel', 'required' => false],
+                ],
                 'business_hours' => [
+                    'enabled' => true,
                     'timezone' => 'Asia/Seoul',
                     'schedule' => [
-                        'mon' => ['09:00', '18:00'],
-                        'tue' => ['09:00', '18:00'],
+                        'mon' => ['start' => '09:00', 'end' => '18:00'],
+                        'tue' => ['start' => '09:00', 'end' => '18:00'],
+                        'wed' => ['start' => '09:00', 'end' => '18:00'],
+                        'thu' => ['start' => '09:00', 'end' => '18:00'],
+                        'fri' => ['start' => '09:00', 'end' => '18:00'],
                     ],
+                    'offline_message' => '영업시간이 아닙니다. 이메일을 남겨주세요.',
                 ],
             ],
             'auto_reply_message' => '현재 영업시간이 아닙니다.',
@@ -34,9 +44,14 @@ class WidgetConfigTest extends TestCase
         $response = $this->getJson("/api/widget/config?api_key={$apiKey}");
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['success', 'data' => ['widget_config', 'auto_reply_message']])
+            ->assertJsonStructure(['success', 'data' => [
+                'widget_config', 'prechat_fields', 'business_hours',
+                'is_within_business_hours', 'auto_reply_message', 'agents_online',
+            ]])
             ->assertJsonPath('data.widget_config.primary_color', '#4F46E5')
-            ->assertJsonPath('data.auto_reply_message', '현재 영업시간이 아닙니다.');
+            ->assertJsonPath('data.auto_reply_message', '현재 영업시간이 아닙니다.')
+            ->assertJsonPath('data.prechat_fields.0.name', 'name')
+            ->assertJsonPath('data.business_hours.enabled', true);
     }
 
     public function test_get_config_with_invalid_key(): void
@@ -77,6 +92,33 @@ class WidgetConfigTest extends TestCase
         $response = $this->getJson("/api/widget/config?api_key={$apiKey}");
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['success', 'data' => ['widget_config', 'auto_reply_message']]);
+            ->assertJsonStructure(['success', 'data' => [
+                'widget_config', 'prechat_fields', 'is_within_business_hours',
+                'auto_reply_message', 'agents_online',
+            ]])
+            ->assertJsonPath('data.is_within_business_hours', true) // 미설정 시 항상 운영중
+            ->assertJsonCount(3, 'data.prechat_fields'); // 기본 3개 필드
+    }
+
+    public function test_business_hours_disabled_returns_within_hours_true(): void
+    {
+        $apiKey = 'ck_live_' . bin2hex(random_bytes(16));
+        Tenant::create([
+            'name' => 'BH Disabled',
+            'api_key' => $apiKey,
+            'owner_id' => 'owner-bhd',
+            'widget_config' => [
+                'business_hours' => [
+                    'enabled' => false,
+                    'timezone' => 'Asia/Seoul',
+                    'schedule' => [],
+                ],
+            ],
+        ]);
+
+        $response = $this->getJson("/api/widget/config?api_key={$apiKey}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.is_within_business_hours', true);
     }
 }

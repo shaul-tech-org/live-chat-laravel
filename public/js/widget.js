@@ -363,6 +363,10 @@
             '.lchat-dark .lchat-offline-title{color:#F3F4F6;}\n' +
             '.lchat-dark .lchat-offline-desc{color:#9CA3AF;}\n' +
             '.lchat-dark .lchat-offline-form input,.lchat-dark .lchat-offline-form textarea{background:#374151;color:#F3F4F6;border-color:#4B5563;}\n' +
+            '.lchat-dark .lchat-msg-check.lchat-read{color:#34D399;}\n' +
+            '.lchat-dark .lchat-bh-offline{background:#451A03;color:#FCD34D;border-bottom-color:#78350F;}\n' +
+            '.lchat-dark .lchat-prechat-field-label{color:#9CA3AF;}\n' +
+            '.lchat-dark .lchat-prechat-fields input{background:#374151;color:#F3F4F6;border-color:#4B5563;}\n' +
 
             /* Mobile responsive */
             '@media(max-width:639px){\n' +
@@ -663,6 +667,13 @@
         if (state.visitorEmail) {
             offlineEmailInput.value = state.visitorEmail;
         }
+        /* LCHAT-93: 운영시간 외 메시지가 있으면 오프라인 설명에 표시 */
+        if (state.businessHours && state.businessHours.offline_message) {
+            var offlineDesc = offlineEl.querySelector('.lchat-offline-desc');
+            if (offlineDesc) {
+                offlineDesc.textContent = state.businessHours.offline_message;
+            }
+        }
     }
 
     function togglePanel() {
@@ -847,44 +858,15 @@
         messagesEl.innerHTML = '';
 
         state.messages.forEach(function (msg) {
-            var wrapper = document.createElement('div');
-            var isVisitor = msg.sender_type === 'visitor';
-            var isSystem = msg.sender_type === 'system' || msg.content_type === 'system';
-
-            if (isSystem) {
-                wrapper.className = 'lchat-msg lchat-msg-system';
-                wrapper.textContent = msg.content;
-            } else {
-                wrapper.className = 'lchat-msg ' + (isVisitor ? 'lchat-msg-visitor' : 'lchat-msg-agent');
-                if (!isVisitor && msg.sender_name) {
-                    var nameEl = document.createElement('div');
-                    nameEl.className = 'lchat-msg-name';
-                    nameEl.textContent = msg.sender_name;
-                    wrapper.appendChild(nameEl);
-                }
-                wrapper.appendChild(buildMessageContentEl(msg));
-                if (msg.created_at) {
-                    var timeEl = document.createElement('div');
-                    timeEl.className = 'lchat-msg-time';
-                    timeEl.textContent = formatTime(msg.created_at);
-                    wrapper.appendChild(timeEl);
-                }
-            }
-
-            messagesEl.appendChild(wrapper);
+            messagesEl.appendChild(buildMessageEl(msg));
         });
 
         messagesEl.appendChild(typingEl);
         scrollToBottom(false);
     }
 
-    function appendMessage(msg) {
-        /* Deduplicate */
-        for (var i = 0; i < state.messages.length; i++) {
-            if (state.messages[i].id && state.messages[i].id === msg.id) return;
-        }
-        state.messages.push(msg);
-
+    /* LCHAT-94: 메시지 엘리먼트 빌드 (읽음 확인 체크마크 포함) */
+    function buildMessageEl(msg) {
         var wrapper = document.createElement('div');
         var isVisitor = msg.sender_type === 'visitor';
         var isSystem = msg.sender_type === 'system' || msg.content_type === 'system';
@@ -903,15 +885,38 @@
             wrapper.appendChild(buildMessageContentEl(msg));
             if (msg.created_at) {
                 var timeEl = document.createElement('div');
-                timeEl.className = 'lchat-msg-time';
+                timeEl.className = 'lchat-msg-time lchat-msg-status';
                 timeEl.textContent = formatTime(msg.created_at);
+                /* LCHAT-94: visitor 메시지에 전송/읽음 체크마크 표시 */
+                if (isVisitor) {
+                    var check = document.createElement('span');
+                    check.className = 'lchat-msg-check' + (msg.is_read ? ' lchat-read' : '');
+                    check.textContent = msg.is_read ? ' \u2713\u2713' : ' \u2713';
+                    check.setAttribute('data-msg-id', msg.id || '');
+                    timeEl.appendChild(check);
+                }
                 wrapper.appendChild(timeEl);
             }
         }
 
+        return wrapper;
+    }
+
+    function appendMessage(msg) {
+        /* Deduplicate */
+        for (var i = 0; i < state.messages.length; i++) {
+            if (state.messages[i].id && state.messages[i].id === msg.id) return;
+        }
+        state.messages.push(msg);
+
         /* Insert before typing indicator */
-        messagesEl.insertBefore(wrapper, typingEl);
+        messagesEl.insertBefore(buildMessageEl(msg), typingEl);
         scrollToBottom(false);
+
+        /* LCHAT-94: 새 agent 메시지를 받으면 자동으로 읽음 처리 */
+        if (state.open && msg.sender_type === 'agent') {
+            markReadForVisitor();
+        }
     }
 
     /* ── API Calls ─────────────────────────────────────────── */
@@ -976,6 +981,8 @@
             state.messages = list;
             renderMessages();
             scrollToBottom(true);
+            /* LCHAT-94: 메시지 로드 후 읽음 처리 */
+            if (state.open) markReadForVisitor();
         })
         .catch(logError);
     }
@@ -1053,6 +1060,51 @@
                 sender_name: state.visitorName,
             }),
         }).catch(function () { /* silent */ });
+    }
+
+    /* LCHAT-94: 방문자가 메시지를 볼 때 읽음 처리 API 호출 */
+    function markReadForVisitor() {
+        if (!state.roomId) return;
+        fetch(cfg.baseUrl + '/api/rooms/' + state.roomId + '/read', {
+            method: 'POST',
+            headers: apiHeaders(),
+            body: JSON.stringify({
+                reader_type: 'visitor',
+                reader_name: state.visitorName || 'visitor',
+            }),
+        }).catch(function () { /* silent */ });
+    }
+
+    /**
+     * LCHAT-94: 상담원 읽음 시 visitor 메시지 체크마크를 ✓✓ (읽음)으로 업데이트
+     */
+    function updateReadReceipts(lastReadMessageId) {
+        if (!lastReadMessageId) return;
+        state.lastReadMessageId = lastReadMessageId;
+
+        /* Update in-memory message data */
+        var found = false;
+        for (var i = state.messages.length - 1; i >= 0; i--) {
+            var m = state.messages[i];
+            if (m.id === lastReadMessageId) found = true;
+            if (found && m.sender_type === 'visitor') {
+                m.is_read = true;
+            }
+        }
+
+        /* Update DOM checkmarks */
+        var checks = messagesEl.querySelectorAll('.lchat-msg-check');
+        checks.forEach(function (el) {
+            var msgId = el.getAttribute('data-msg-id');
+            if (!msgId) return;
+            for (var j = 0; j < state.messages.length; j++) {
+                if (state.messages[j].id === msgId && state.messages[j].is_read) {
+                    el.classList.add('lchat-read');
+                    el.textContent = ' \u2713\u2713';
+                    break;
+                }
+            }
+        });
     }
 
     function appendSystemMsg(text) {
@@ -1272,6 +1324,14 @@
                     var data = e.data || e;
                     if (data.sender_type === 'visitor') return;
                     showTypingIndicator();
+                });
+
+                /* LCHAT-94: 상담원이 읽음 처리 시 체크마크 업데이트 */
+                state.echoChannel.listen('.message.read', function (e) {
+                    var data = e.data || e;
+                    if (data.reader_type === 'agent') {
+                        updateReadReceipts(data.last_read_message_id);
+                    }
                 });
 
                 echo.connector.pusher.connection.bind('disconnected', function () {

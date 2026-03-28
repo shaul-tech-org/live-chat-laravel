@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Table(key: 'id', keyType: 'string', incrementing: false)]
 #[Fillable([
-    'tenant_id', 'visitor_id', 'visitor_name', 'visitor_email',
+    'tenant_id', 'visitor_id', 'visitor_name', 'visitor_email', 'visitor_phone',
     'status', 'assigned_agent_id', 'assignment_method', 'closed_at',
 ])]
 class ChatRoom extends Model

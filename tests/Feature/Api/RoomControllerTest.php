@@ -42,6 +42,20 @@ class RoomControllerTest extends TestCase
         $this->assertEquals('open', $response->json('data.status'));
     }
 
+    public function test_create_room_with_phone_returns_201(): void
+    {
+        $response = $this->postJson('/api/rooms', [
+            'visitor_name' => '홍길동',
+            'visitor_email' => 'hong@example.com',
+            'visitor_phone' => '010-1234-5678',
+        ], ['X-API-Key' => $this->apiKey]);
+
+        $response->assertStatus(201)
+            ->assertJsonStructure(['success', 'data' => ['id', 'tenant_id', 'visitor_id', 'visitor_name', 'visitor_phone', 'status']]);
+
+        $this->assertEquals('010-1234-5678', $response->json('data.visitor_phone'));
+    }
+
     // --- Api\RoomController: visitorRooms ---
 
     public function test_visitor_rooms_returns_own_rooms(): void
