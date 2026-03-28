@@ -79,8 +79,12 @@ jobs:
       - name: Run PHPUnit tests
         env:
           APP_ENV: testing
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ":memory:"
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: live_chat_test
+          DB_USERNAME: chatuser
+          DB_PASSWORD: changeme
           MONGODB_URI: "mongodb://chatuser:changeme@127.0.0.1:27017"
           MONGODB_DATABASE: live_chat_test
           REDIS_HOST: 127.0.0.1
