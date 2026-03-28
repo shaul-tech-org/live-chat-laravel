@@ -6,12 +6,12 @@
 <script>window.__ADMIN_TOKEN = @json($adminToken ?? '');</script>
 <div class="flex flex-col h-screen" x-data="adminApp()">
     {{-- 헤더 --}}
-    <header class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0">
-        <div class="flex items-center gap-3">
+    <header class="flex items-center justify-between px-2 md:px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0">
+        <div class="flex items-center gap-2 md:gap-3">
             <h1 class="text-lg font-bold">LCHAT</h1>
             <span class="text-xs text-gray-500 dark:text-gray-400">관리자</span>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1 md:gap-3">
             <button @click="soundEnabled = !soundEnabled" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" :title="soundEnabled ? '알림 음소거' : '알림 켜기'">
                 <span x-show="soundEnabled">🔔</span>
                 <span x-show="!soundEnabled">🔕</span>

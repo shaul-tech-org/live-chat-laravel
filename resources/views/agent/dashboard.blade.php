@@ -6,13 +6,13 @@
 <script>window.__ADMIN_TOKEN = @json($adminToken ?? '');</script>
 <div class="flex flex-col h-screen" x-data="agentDashboard()">
     {{-- 헤더 --}}
-    <header class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0">
-        <div class="flex items-center gap-3">
+    <header class="flex items-center justify-between px-2 md:px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0">
+        <div class="flex items-center gap-2 md:gap-3">
             <h1 class="text-lg font-bold">LCHAT</h1>
             <span class="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded">상담원</span>
         </div>
-        <div class="flex items-center gap-3">
-            <a href="{{ route('admin.dashboard') }}" class="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">관리자</a>
+        <div class="flex items-center gap-1 md:gap-3">
+            <a href="{{ route('admin.dashboard') }}" class="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hidden md:inline">관리자</a>
             <button @click="soundEnabled = !soundEnabled" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" :title="soundEnabled ? '알림 음소거' : '알림 켜기'">
                 <svg x-show="soundEnabled" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 6l-4 4H4v4h4l4 4V6z"/></svg>
                 <svg x-show="!soundEnabled" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15z" clip-rule="evenodd"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
@@ -49,7 +49,7 @@
 
                 <template x-for="room in myRooms" :key="room.id">
                     <div
-                        @click="selectRoom(room)"
+                        @click="selectRoom(room); if (window.innerWidth < 768) mobileView = 'chat'"
                         :class="selectedRoom && selectedRoom.id === room.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-500' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 border-l-2 border-transparent'"
                         class="px-3 py-2.5 cursor-pointer border-b border-gray-100 dark:border-gray-700 transition-colors"
                     >
@@ -82,7 +82,7 @@
 
                 <template x-for="room in waitingRooms" :key="room.id">
                     <div
-                        @click="selectRoom(room)"
+                        @click="selectRoom(room); if (window.innerWidth < 768) mobileView = 'chat'"
                         :class="selectedRoom && selectedRoom.id === room.id ? 'bg-orange-50 dark:bg-orange-900/20 border-l-2 border-orange-400' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 border-l-2 border-transparent'"
                         class="px-3 py-2.5 cursor-pointer border-b border-gray-100 dark:border-gray-700 transition-colors"
                     >
@@ -117,7 +117,7 @@
                     <div>
                         <template x-for="room in closedRooms" :key="room.id">
                             <div
-                                @click="selectRoom(room)"
+                                @click="selectRoom(room); if (window.innerWidth < 768) mobileView = 'chat'"
                                 :class="selectedRoom && selectedRoom.id === room.id ? 'bg-gray-100 dark:bg-gray-700 border-l-2 border-gray-400' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 border-l-2 border-transparent'"
                                 class="px-3 py-2.5 cursor-pointer border-b border-gray-100 dark:border-gray-700 transition-colors opacity-60"
                             >
@@ -133,8 +133,9 @@
             </div>
         </aside>
 
-        {{-- 메인 채팅 영역 --}}
-        <section class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
+        {{-- 메인 채팅 영역: 데스크톱 항상 표시, 모바일은 mobileView=chat 일 때만 --}}
+        <section class="flex-1 flex-col bg-gray-50 dark:bg-gray-900 hidden md:flex"
+                 :class="{ '!flex': mobileView === 'chat' }">
             {{-- 빈 상태 --}}
             <div x-show="!selectedRoom" x-cloak class="flex-1 flex items-center justify-center">
                 <div class="text-center">
@@ -153,6 +154,9 @@
                     <div class="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
+                                <button @click="mobileView = 'list'" class="md:hidden p-1 -ml-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
                                 <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
                                     <span class="text-sm font-medium text-blue-600 dark:text-blue-400" x-text="(selectedRoom.visitor_name || '?')[0].toUpperCase()"></span>
                                 </div>
@@ -249,8 +253,8 @@
             </template>
         </section>
 
-        {{-- 우측 사이드바: 방문자 정보 --}}
-        <aside x-show="selectedRoom && showInfoPanel" x-cloak class="w-60 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0 overflow-y-auto">
+        {{-- 우측 사이드바: 방문자 정보 (태블릿 이하에서 숨김) --}}
+        <aside x-show="selectedRoom && showInfoPanel" x-cloak class="w-60 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0 overflow-y-auto hidden lg:block">
             <template x-if="selectedRoom">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-4">
@@ -302,11 +306,11 @@
             </template>
         </aside>
 
-        {{-- 정보 패널 토글 (우측 끝) --}}
+        {{-- 정보 패널 토글 (우측 끝, 태블릿 이하에서 숨김) --}}
         <button
             x-show="selectedRoom && !showInfoPanel"
             @click="showInfoPanel = true"
-            class="absolute right-0 top-1/2 -translate-y-1/2 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-l-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+            class="absolute right-0 top-1/2 -translate-y-1/2 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-l-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 hidden lg:block"
             title="방문자 정보"
         >
             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -315,7 +319,7 @@
 
     {{-- 전달 모달 --}}
     <div x-show="showTransferModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div @click.outside="showTransferModal = false" class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-96 max-h-[80vh] overflow-hidden">
+        <div @click.outside="showTransferModal = false" class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-[calc(100%-2rem)] max-w-96 max-h-[80vh] overflow-hidden mx-4">
             <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="font-medium">대화 전달</h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">다른 상담원에게 이 대화를 전달합니다</p>
@@ -373,6 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function agentDashboard() {
     return {
         // State
+        mobileView: 'list',
         myRooms: [],
         waitingRooms: [],
         closedRooms: [],
