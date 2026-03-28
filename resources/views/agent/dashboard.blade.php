@@ -197,7 +197,18 @@
                                     <div class="max-w-[70%]">
                                         <div class="text-xs text-gray-500 dark:text-gray-400 mb-1" x-text="msg.sender_name || '방문자'"></div>
                                         <div class="bg-gray-200 dark:bg-gray-700 rounded-lg px-3 py-2 text-sm">
-                                            <span x-text="msg.content"></span>
+                                            <template x-if="msg.content_type === 'image' && msg.file_url">
+                                                <img :src="msg.file_url" :alt="msg.content || '이미지'" class="max-w-[200px] rounded-lg cursor-pointer hover:opacity-90" @click="openImageOverlay(msg.file_url)" loading="lazy">
+                                            </template>
+                                            <template x-if="msg.content_type === 'file' && msg.file_url">
+                                                <a :href="msg.file_url" target="_blank" rel="noopener noreferrer" download class="flex items-center gap-2 hover:opacity-80">
+                                                    <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                                                    <span class="truncate" x-text="msg.content || '파일'"></span>
+                                                </a>
+                                            </template>
+                                            <template x-if="!msg.content_type || msg.content_type === 'text'">
+                                                <span x-text="msg.content"></span>
+                                            </template>
                                         </div>
                                         <div class="text-xs text-gray-400 mt-1" x-text="formatMessageTime(msg.created_at)"></div>
                                     </div>
@@ -207,7 +218,18 @@
                                     <div class="max-w-[70%]">
                                         <div class="text-xs text-gray-500 dark:text-gray-400 mb-1 text-right" x-text="msg.sender_name || '상담사'"></div>
                                         <div class="bg-blue-600 text-white rounded-lg px-3 py-2 text-sm">
-                                            <span x-text="msg.content"></span>
+                                            <template x-if="msg.content_type === 'image' && msg.file_url">
+                                                <img :src="msg.file_url" :alt="msg.content || '이미지'" class="max-w-[200px] rounded-lg cursor-pointer hover:opacity-90" @click="openImageOverlay(msg.file_url)" loading="lazy">
+                                            </template>
+                                            <template x-if="msg.content_type === 'file' && msg.file_url">
+                                                <a :href="msg.file_url" target="_blank" rel="noopener noreferrer" download class="flex items-center gap-2 text-white hover:opacity-80">
+                                                    <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                                                    <span class="truncate" x-text="msg.content || '파일'"></span>
+                                                </a>
+                                            </template>
+                                            <template x-if="!msg.content_type || msg.content_type === 'text'">
+                                                <span x-text="msg.content"></span>
+                                            </template>
                                         </div>
                                         <div class="text-xs text-gray-400 mt-1 text-right" x-text="formatMessageTime(msg.created_at)"></div>
                                     </div>
@@ -216,8 +238,22 @@
                         </template>
                     </div>
 
+                    {{-- 이미지 오버레이 --}}
+                    <div x-show="imageOverlaySrc" x-cloak @click="imageOverlaySrc = null" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center cursor-pointer">
+                        <img :src="imageOverlaySrc" class="max-w-[90%] max-h-[90%] rounded-lg">
+                    </div>
+
                     {{-- 타이핑 인디케이터 --}}
                     <div x-show="typingUser" x-cloak class="px-4 py-1 text-xs text-gray-400 italic" x-text="typingUser + ' 입력 중...'"></div>
+
+                    {{-- 업로드 진행률 --}}
+                    <div x-show="uploadProgress >= 0" x-cloak class="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                        <span x-text="'업로드 중... ' + uploadProgress + '%'"></span>
+                        <div class="flex-1 h-1 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-600 rounded-full transition-all" :style="'width:' + uploadProgress + '%'"></div>
+                        </div>
+                        <button @click="cancelUpload()" class="text-red-500 hover:text-red-700">&times;</button>
+                    </div>
 
                     {{-- 메시지 입력 --}}
                     <div x-show="selectedRoom.status === 'open'" class="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shrink-0">
@@ -229,6 +265,15 @@
                             >대화 가져오기</button>
                         </div>
                         <div x-show="selectedRoom.assigned_agent_id" class="flex gap-2">
+                            <input type="file" x-ref="agentFileInput" class="hidden" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,application/pdf,text/plain,text/csv" @change="handleFileSelect($event)">
+                            <button
+                                @click="$refs.agentFileInput.click()"
+                                :disabled="uploadProgress >= 0"
+                                class="px-2 py-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors shrink-0 disabled:opacity-50"
+                                title="파일 첨부"
+                            >
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+                            </button>
                             <textarea
                                 x-model="newMessage"
                                 @keydown.enter.prevent="sendMessage()"
@@ -396,6 +441,11 @@ function agentDashboard() {
         typingUser: null,
         typingTimeout: null,
         lastTypingSent: 0,
+
+        // File upload
+        uploadProgress: -1,
+        currentUploadXhr: null,
+        imageOverlaySrc: null,
 
         // Polling
         roomPollInterval: null,
@@ -579,6 +629,108 @@ function agentDashboard() {
                 headers: this.authHeaders,
                 body: JSON.stringify({}),
             }).catch(() => {});
+        },
+
+        handleFileSelect(event) {
+            const file = event.target.files?.[0];
+            if (!file || !this.selectedRoom) return;
+            if (file.size > 10 * 1024 * 1024) {
+                alert('파일 크기는 10MB를 초과할 수 없습니다.');
+                event.target.value = '';
+                return;
+            }
+            this.uploadFileAgent(file);
+            event.target.value = '';
+        },
+
+        uploadFileAgent(file) {
+            const isImage = file.type?.startsWith('image/');
+            const contentType = isImage ? 'image' : 'file';
+
+            this.uploadProgress = 0;
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const xhr = new XMLHttpRequest();
+            this.currentUploadXhr = xhr;
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    this.uploadProgress = Math.round((e.loaded / e.total) * 100);
+                }
+            });
+
+            xhr.addEventListener('load', () => {
+                this.currentUploadXhr = null;
+                this.uploadProgress = -1;
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const json = JSON.parse(xhr.responseText);
+                        const data = json.data || json;
+                        this.sendFileMessage(data, contentType, file.name);
+                    } catch (err) {
+                        console.error('[AgentChat] Upload parse error', err);
+                    }
+                } else {
+                    alert('파일 업로드에 실패했습니다.');
+                }
+            });
+
+            xhr.addEventListener('error', () => {
+                this.currentUploadXhr = null;
+                this.uploadProgress = -1;
+                alert('파일 업로드 중 오류가 발생했습니다.');
+            });
+
+            xhr.addEventListener('abort', () => {
+                this.currentUploadXhr = null;
+                this.uploadProgress = -1;
+            });
+
+            xhr.open('POST', '/api/admin/upload');
+            xhr.setRequestHeader('Accept', 'application/json');
+            xhr.setRequestHeader('Authorization', 'Bearer ' + (window.__ADMIN_TOKEN || ''));
+            xhr.send(formData);
+        },
+
+        cancelUpload() {
+            if (this.currentUploadXhr) {
+                this.currentUploadXhr.abort();
+            }
+        },
+
+        async sendFileMessage(uploadData, contentType, fileName) {
+            if (!this.selectedRoom) return;
+            const fileUrl = uploadData.file_url || uploadData.url;
+            const displayName = uploadData.file_name || fileName;
+            try {
+                const res = await fetch(`/api/agent/rooms/${this.selectedRoom.id}/messages`, {
+                    method: 'POST',
+                    headers: this.authHeaders,
+                    body: JSON.stringify({
+                        content: displayName,
+                        content_type: contentType,
+                        file_url: fileUrl,
+                    }),
+                });
+                const json = await res.json();
+                if (json.success) {
+                    if (!this.messages.find(m => m.id === json.data.id)) {
+                        this.messages.push(json.data);
+                    }
+                    this.$nextTick(() => {
+                        if (this.$refs.messageContainer) {
+                            this.$refs.messageContainer.scrollTop = this.$refs.messageContainer.scrollHeight;
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('[AgentChat] Send file message error', e);
+            }
+        },
+
+        openImageOverlay(src) {
+            this.imageOverlaySrc = src;
         },
 
         async assignRoom(room) {
