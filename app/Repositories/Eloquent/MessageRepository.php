@@ -23,7 +23,9 @@ class MessageRepository implements MessageRepositoryInterface
 
         return $query->orderByDesc('created_at')
             ->limit($limit)
-            ->get();
+            ->get()
+            ->reverse()
+            ->values();
     }
 
     public function markAsRead(string $roomId, string $excludeSenderType): array

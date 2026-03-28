@@ -30,8 +30,9 @@
 
     {{-- 메인 콘텐츠 --}}
     <main class="flex flex-1 overflow-hidden">
-        {{-- 좌측 사이드바: 대화 목록 --}}
-        <aside class="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 shrink-0">
+        {{-- 좌측 사이드바: 데스크톱 항상 표시, 모바일은 mobileView=list 일 때만 --}}
+        <aside class="w-full md:w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 shrink-0"
+               :class="{ 'hidden md:flex': mobileView !== 'list' }">
             {{-- 내 대화 섹션 --}}
             <div class="flex-1 overflow-y-auto">
                 <div class="px-3 pt-3 pb-2">

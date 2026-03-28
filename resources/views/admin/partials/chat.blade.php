@@ -1,5 +1,7 @@
 <div x-data="chatTab()" class="flex h-full">
-    <div class="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 shrink-0">
+    {{-- 좌측 사이드바: 데스크톱 항상 표시, 모바일은 mobileView=list 일 때만 --}}
+    <div class="w-full md:w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 shrink-0"
+         :class="{ 'hidden md:flex': mobileView !== 'list' }">
         <div class="p-3 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -43,7 +45,7 @@
         <div class="flex-1 overflow-y-auto">
             <template x-for="room in filteredRooms" :key="room.id">
                 <div
-                    @click="selectRoom(room)"
+                    @click="selectRoom(room); if (window.innerWidth < 768) mobileView = 'chat'"
                     :class="selectedRoom && selectedRoom.id === room.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-500' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'"
                     class="p-3 cursor-pointer border-b border-gray-100 dark:border-gray-700 transition-colors"
                 >
@@ -89,7 +91,9 @@
         </div>
     </div>
 
-    <div class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
+    {{-- 메인 채팅 영역: 데스크톱 항상 표시, 모바일은 mobileView=chat 일 때만 --}}
+    <div class="flex-1 flex-col bg-gray-50 dark:bg-gray-900 hidden md:flex"
+         :class="{ '!flex': mobileView === 'chat' }">
         <div x-show="!selectedRoom" x-cloak class="flex-1 flex items-center justify-center">
             <p class="text-gray-400 dark:text-gray-500 text-lg">채팅방을 선택하세요</p>
         </div>
@@ -98,7 +102,10 @@
             <div class="flex-1 flex flex-col">
                 <div class="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0">
                     <div class="flex items-center justify-between">
-                        <div>
+                        <div class="flex items-center gap-2">
+                            <button @click="mobileView = 'list'" class="md:hidden p-1 -ml-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
                             <span class="font-medium" x-text="selectedRoom.visitor_name || '방문자'"></span>
                             <span
                                 :class="selectedRoom.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'"
@@ -228,6 +235,7 @@ function chatTab() {
         totalRooms: 0,
         loadingMore: false,
         perPage: 20,
+        mobileView: 'list',
 
         get hasMorePages() {
             return this.currentPage < this.lastPage;
