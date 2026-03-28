@@ -43,6 +43,7 @@ class RoomRepository implements RoomRepositoryInterface
         $query = ChatRoom::query();
 
         $query = match ($sort) {
+            'oldest' => $query->orderBy('created_at', 'asc'),
             'activity' => $query->orderByDesc('updated_at'),
             default => $query->orderByDesc('created_at'),
         };

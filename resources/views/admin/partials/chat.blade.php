@@ -10,6 +10,7 @@
                     @change="changeSort()"
                     class="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-blue-500"
                 >
+                    <option value="oldest">오래된순</option>
                     <option value="newest">최신순</option>
                     <option value="activity">최근 활동순</option>
                 </select>
@@ -221,7 +222,7 @@ function chatTab() {
         newMessage: '',
         filter: 'all',
         search: '',
-        sort: 'newest',
+        sort: 'oldest',
         currentPage: 1,
         lastPage: 1,
         totalRooms: 0,
