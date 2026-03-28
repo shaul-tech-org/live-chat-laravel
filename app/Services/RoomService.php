@@ -11,6 +11,7 @@ class RoomService
 {
     public function __construct(
         private readonly RoomRepositoryInterface $roomRepo,
+        private readonly RoutingService $routingService,
     ) {}
 
     public function findForTenant(string $id, string $tenantId): ChatRoom
@@ -37,7 +38,12 @@ class RoomService
 
     public function create(string $tenantId, array $data): ChatRoom
     {
-        return $this->roomRepo->createForVisitor($tenantId, $data);
+        $room = $this->roomRepo->createForVisitor($tenantId, $data);
+
+        // 방 생성 시 온라인 상담원에게 자동 배정 (없으면 대기열 유지)
+        $this->routingService->autoAssign($room);
+
+        return $room->refresh();
     }
 
     public function listByVisitor(string $tenantId, string $visitorId, int $perPage = 20): LengthAwarePaginator

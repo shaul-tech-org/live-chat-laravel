@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Agent;
 use App\Http\Controllers\Api;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth;
@@ -54,6 +55,18 @@ Route::middleware(['api.key', 'xss', 'throttle:api'])->group(function () {
 // Broadcasting auth (custom — API key or bearer token)
 Route::post('/broadcasting/auth', [\App\Http\Controllers\BroadcastAuthController::class, 'authenticate']);
 
+// Agent Dashboard (Built-in / Keycloak auth + XSS + admin rate limit)
+Route::middleware(['admin.auth', 'xss', 'throttle:admin-api'])->prefix('agent')->group(function () {
+    Route::get('/rooms', [Agent\RoomController::class, 'index']);
+    Route::get('/rooms/{id}/messages', [Agent\RoomController::class, 'messages']);
+    Route::post('/rooms/{id}/messages', [Agent\RoomController::class, 'sendMessage']);
+    Route::post('/rooms/{id}/typing', [Agent\RoomController::class, 'sendTyping']);
+    Route::post('/rooms/{id}/assign', [Agent\RoomController::class, 'assign']);
+    Route::post('/rooms/{id}/transfer', [Agent\RoomController::class, 'transfer']);
+    Route::post('/rooms/{id}/close', [Agent\RoomController::class, 'close']);
+    Route::get('/agents', [Agent\RoomController::class, 'agents']);
+});
+
 // Admin (Built-in / Keycloak auth + XSS + admin rate limit)
 Route::middleware(['admin.auth', 'xss', 'throttle:admin-api'])->prefix('admin')->group(function () {
     // Rooms
@@ -83,6 +96,11 @@ Route::middleware(['admin.auth', 'xss', 'throttle:admin-api'])->prefix('admin')-
     Route::get('/faq', [Admin\FaqController::class, 'index']);
     Route::post('/faq', [Admin\FaqController::class, 'store']);
     Route::delete('/faq/{id}', [Admin\FaqController::class, 'destroy']);
+
+    // Assignment / Routing
+    Route::post('/rooms/{id}/assign', [Admin\AssignmentController::class, 'assign']);
+    Route::post('/rooms/{id}/transfer', [Admin\AssignmentController::class, 'transfer']);
+    Route::post('/rooms/{id}/unassign', [Admin\AssignmentController::class, 'unassign']);
 
     // Stats
     Route::get('/stats', [Admin\StatsController::class, 'index']);
