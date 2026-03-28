@@ -19,6 +19,7 @@
     var LS_ROOM = 'lchat_room_id';
     var LS_VISITOR = 'lchat_visitor_id';
     var LS_NAME = 'lchat_visitor_name';
+    var LS_EMAIL = 'lchat_visitor_email';
 
     var script = document.currentScript;
     var cfg = {
@@ -45,6 +46,8 @@
         typingTimeout: null,
         showTyping: false,
         connectionStatus: 'offline', /* 'online' | 'reconnecting' | 'offline' */
+        agentsOnline: null, /* null = unknown, 0 = offline, >0 = online */
+        visitorEmail: localStorage.getItem(LS_EMAIL) || '',
     };
 
     /* ── Dark Mode Detection ───────────────────────────────── */
@@ -119,10 +122,32 @@
             '.lchat-textarea:focus{border-color:#4F46E5;box-shadow:0 0 0 2px rgba(79,70,229,.15);}\n' +
             '.lchat-textarea:empty::before{content:attr(data-placeholder);color:#9CA3AF;pointer-events:none;}\n' +
             '.lchat-textarea br.lchat-placeholder-br{display:none;}\n' +
+            '.lchat-attach-btn{width:38px;height:38px;border-radius:10px;border:none;background:transparent;color:#6B7280;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s;}\n' +
+            '.lchat-attach-btn:hover{background:#F3F4F6;color:#4F46E5;}\n' +
+            '.lchat-attach-btn svg{width:20px;height:20px;fill:currentColor;}\n' +
             '.lchat-send-btn{width:38px;height:38px;border-radius:10px;border:none;background:#4F46E5;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}\n' +
             '.lchat-send-btn:hover{background:#4338CA;}\n' +
             '.lchat-send-btn:disabled{background:#A5B4FC;cursor:not-allowed;}\n' +
             '.lchat-send-btn svg{width:18px;height:18px;fill:#fff;}\n' +
+
+            /* File upload styles */
+            '.lchat-upload-progress{padding:8px 12px;background:#EEF2FF;border-top:1px solid #E5E7EB;display:flex;align-items:center;gap:8px;font-size:12px;color:#4F46E5;}\n' +
+            '.lchat-upload-progress-bar{flex:1;height:4px;background:#E5E7EB;border-radius:2px;overflow:hidden;}\n' +
+            '.lchat-upload-progress-fill{height:100%;background:#4F46E5;border-radius:2px;transition:width .2s ease;}\n' +
+            '.lchat-upload-cancel{background:none;border:none;color:#EF4444;cursor:pointer;font-size:12px;padding:2px 4px;}\n' +
+            '.lchat-msg-image{max-width:200px;border-radius:8px;cursor:pointer;display:block;margin:4px 0;}\n' +
+            '.lchat-msg-image:hover{opacity:.9;}\n' +
+            '.lchat-msg-file{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,.15);border-radius:8px;margin:4px 0;text-decoration:none;color:inherit;font-size:13px;}\n' +
+            '.lchat-msg-agent .lchat-msg-file{background:rgba(0,0,0,.06);}\n' +
+            '.lchat-msg-file:hover{opacity:.8;}\n' +
+            '.lchat-msg-file-icon{flex-shrink:0;width:20px;height:20px;}\n' +
+            '.lchat-msg-file-info{overflow:hidden;}\n' +
+            '.lchat-msg-file-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}\n' +
+            '.lchat-msg-file-size{font-size:11px;opacity:.6;}\n' +
+            '.lchat-drag-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(79,70,229,.1);border:2px dashed #4F46E5;border-radius:12px;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none;}\n' +
+            '.lchat-drag-overlay-text{font-size:14px;font-weight:600;color:#4F46E5;}\n' +
+            '.lchat-image-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999999;display:flex;align-items:center;justify-content:center;cursor:pointer;}\n' +
+            '.lchat-image-overlay img{max-width:90%;max-height:90%;border-radius:8px;}\n' +
 
             /* Pre-chat form */
             '.lchat-prechat{flex:1;display:flex;flex-direction:column;align-items:center;padding:32px 24px;gap:0;background:#F9FAFB;overflow-y:auto;}\n' +
@@ -147,6 +172,21 @@
             '.lchat-prechat-btn:hover{background:#4338CA;}\n' +
             '.lchat-prechat-btn:disabled{background:#A5B4FC;cursor:not-allowed;}\n' +
 
+            /* Offline form */
+            '.lchat-offline{flex:1;display:flex;flex-direction:column;align-items:center;padding:32px 24px;gap:0;background:#F9FAFB;overflow-y:auto;}\n' +
+            '.lchat-offline-icon{width:64px;height:64px;border-radius:50%;background:#FEF3C7;display:flex;align-items:center;justify-content:center;margin-top:24px;margin-bottom:12px;}\n' +
+            '.lchat-offline-icon svg{width:32px;height:32px;fill:#F59E0B;}\n' +
+            '.lchat-offline-title{font-size:18px;font-weight:700;color:#1F2937;margin-bottom:8px;text-align:center;}\n' +
+            '.lchat-offline-desc{font-size:14px;color:#6B7280;text-align:center;margin-bottom:24px;line-height:1.5;}\n' +
+            '.lchat-offline-form{width:100%;display:flex;flex-direction:column;gap:12px;}\n' +
+            '.lchat-offline-form input,.lchat-offline-form textarea{width:100%;padding:10px 14px;border:1px solid #D1D5DB;border-radius:10px;font-size:14px;outline:none;background:#fff;color:#1F2937;font-family:inherit;box-sizing:border-box;}\n' +
+            '.lchat-offline-form input:focus,.lchat-offline-form textarea:focus{border-color:#4F46E5;box-shadow:0 0 0 2px rgba(79,70,229,.15);}\n' +
+            '.lchat-offline-form textarea{min-height:100px;resize:vertical;line-height:1.5;}\n' +
+            '.lchat-offline-btn{width:100%;padding:12px 16px;border:none;border-radius:10px;background:#F59E0B;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;}\n' +
+            '.lchat-offline-btn:hover{background:#D97706;}\n' +
+            '.lchat-offline-btn:disabled{background:#FCD34D;cursor:not-allowed;}\n' +
+            '.lchat-offline-success{text-align:center;color:#059669;font-size:14px;font-weight:500;padding:8px 0;}\n' +
+
             /* Dark mode */
             '.lchat-dark .lchat-panel{background:#1F2937;}\n' +
             '.lchat-dark .lchat-messages{background:#111827;}\n' +
@@ -166,10 +206,24 @@
             '.lchat-dark .lchat-topic-btn{background:#1F2937;color:#D1D5DB;border-color:#374151;}\n' +
             '.lchat-dark .lchat-topic-btn:hover{background:#1E1B4B;color:#A5B4FC;border-color:#4F46E5;}\n' +
             '.lchat-dark .lchat-prechat-divider::before,.lchat-dark .lchat-prechat-divider::after{background:#374151;}\n' +
+            '.lchat-dark .lchat-attach-btn{color:#9CA3AF;}\n' +
+            '.lchat-dark .lchat-attach-btn:hover{background:#374151;color:#818CF8;}\n' +
+            '.lchat-dark .lchat-upload-progress{background:#1E1B4B;border-top-color:#374151;color:#818CF8;}\n' +
+            '.lchat-dark .lchat-upload-progress-bar{background:#374151;}\n' +
+            '.lchat-dark .lchat-upload-progress-fill{background:#818CF8;}\n' +
+            '.lchat-dark .lchat-msg-agent .lchat-msg-file{background:rgba(255,255,255,.08);}\n' +
+            '.lchat-dark .lchat-drag-overlay{background:rgba(30,27,75,.3);border-color:#818CF8;}\n' +
+            '.lchat-dark .lchat-drag-overlay-text{color:#818CF8;}\n' +
             '.lchat-dark .lchat-header{background:#3730A3;}\n' +
             '.lchat-dark .lchat-status-dot.lchat-online{background:#34D399;}\n' +
             '.lchat-dark .lchat-status-dot.lchat-reconnecting{background:#F59E0B;}\n' +
             '.lchat-dark .lchat-status-dot.lchat-offline{background:#6B7280;}\n' +
+            '.lchat-dark .lchat-offline{background:#111827;}\n' +
+            '.lchat-dark .lchat-offline-icon{background:#451A03;}\n' +
+            '.lchat-dark .lchat-offline-icon svg{fill:#FBBF24;}\n' +
+            '.lchat-dark .lchat-offline-title{color:#F3F4F6;}\n' +
+            '.lchat-dark .lchat-offline-desc{color:#9CA3AF;}\n' +
+            '.lchat-dark .lchat-offline-form input,.lchat-dark .lchat-offline-form textarea{background:#374151;color:#F3F4F6;border-color:#4B5563;}\n' +
 
             /* Mobile responsive */
             '@media(max-width:639px){\n' +
@@ -185,9 +239,11 @@
     var ICON_CHAT = '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z"/><path d="M7 9h10v2H7zm0-3h10v2H7z"/></svg>';
     var ICON_CLOSE = '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
     var ICON_SEND = '<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
+    var ICON_ATTACH = '<svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>';
+    var ICON_FILE = '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>';
 
     /* ── DOM Construction ───────────────────────────────────── */
-    var root, bubble, badge, panel, backdrop, header, messagesEl, typingEl, inputArea, textarea, sendBtn, prechatEl, prechatInput, prechatBtn;
+    var root, bubble, badge, panel, backdrop, header, messagesEl, typingEl, inputArea, textarea, sendBtn, prechatEl, prechatInput, prechatBtn, attachBtn, fileInput, uploadProgressEl, dragOverlay, offlineEl, offlineEmailInput, offlineMessageInput, offlineSubmitBtn;
 
     function buildDOM() {
         root = document.createElement('div');
@@ -302,6 +358,48 @@
 
         panel.appendChild(prechatEl);
 
+        /* Offline form */
+        offlineEl = document.createElement('div');
+        offlineEl.className = 'lchat-offline lchat-hidden';
+
+        var offlineIcon = document.createElement('div');
+        offlineIcon.className = 'lchat-offline-icon';
+        offlineIcon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>';
+        offlineEl.appendChild(offlineIcon);
+
+        var offlineTitle = document.createElement('div');
+        offlineTitle.className = 'lchat-offline-title';
+        offlineTitle.textContent = '\uD604\uC7AC \uC0C1\uB2F4\uC0AC\uAC00 \uBD80\uC7AC\uC911\uC785\uB2C8\uB2E4';
+        offlineEl.appendChild(offlineTitle);
+
+        var offlineDesc = document.createElement('div');
+        offlineDesc.className = 'lchat-offline-desc';
+        offlineDesc.textContent = '\uC774\uBA54\uC77C\uACFC \uBA54\uC2DC\uC9C0\uB97C \uB0A8\uACA8\uC8FC\uC2DC\uBA74\n\uBE60\uB978 \uC2DC\uAC04 \uB0B4 \uB2F4\uBCC0\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4.';
+        offlineEl.appendChild(offlineDesc);
+
+        var offlineForm = document.createElement('div');
+        offlineForm.className = 'lchat-offline-form';
+
+        offlineEmailInput = document.createElement('input');
+        offlineEmailInput.type = 'email';
+        offlineEmailInput.placeholder = '\uC774\uBA54\uC77C \uC8FC\uC18C (\uD544\uC218)';
+        offlineEmailInput.required = true;
+        offlineEmailInput.setAttribute('autocomplete', 'email');
+        offlineForm.appendChild(offlineEmailInput);
+
+        offlineMessageInput = document.createElement('textarea');
+        offlineMessageInput.placeholder = '\uBA54\uC2DC\uC9C0\uB97C \uC785\uB825\uD558\uC138\uC694...';
+        offlineMessageInput.required = true;
+        offlineForm.appendChild(offlineMessageInput);
+
+        offlineSubmitBtn = document.createElement('button');
+        offlineSubmitBtn.className = 'lchat-offline-btn';
+        offlineSubmitBtn.textContent = '\uBA54\uC2DC\uC9C0 \uB0A8\uAE30\uAE30';
+        offlineForm.appendChild(offlineSubmitBtn);
+
+        offlineEl.appendChild(offlineForm);
+        panel.appendChild(offlineEl);
+
         /* Messages area */
         messagesEl = document.createElement('div');
         messagesEl.className = 'lchat-messages lchat-hidden';
@@ -317,9 +415,30 @@
 
         panel.appendChild(messagesEl);
 
+        /* Upload progress bar (inserted before input area) */
+        uploadProgressEl = document.createElement('div');
+        uploadProgressEl.className = 'lchat-upload-progress lchat-hidden';
+        uploadProgressEl.innerHTML = '<span class="lchat-upload-progress-label">업로드 중...</span>' +
+            '<div class="lchat-upload-progress-bar"><div class="lchat-upload-progress-fill" style="width:0%"></div></div>' +
+            '<button class="lchat-upload-cancel" aria-label="취소">&#10005;</button>';
+        panel.appendChild(uploadProgressEl);
+
         /* Input area */
         inputArea = document.createElement('div');
         inputArea.className = 'lchat-input-area lchat-hidden';
+
+        /* Hidden file input */
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/jpeg,image/png,image/gif,image/webp,image/svg+xml,application/pdf,text/plain,text/csv';
+        fileInput.style.display = 'none';
+
+        /* Attach button */
+        attachBtn = document.createElement('button');
+        attachBtn.className = 'lchat-attach-btn';
+        attachBtn.innerHTML = ICON_ATTACH;
+        attachBtn.setAttribute('aria-label', '파일 첨부');
+
         textarea = document.createElement('div');
         textarea.className = 'lchat-textarea';
         textarea.setAttribute('contenteditable', 'true');
@@ -331,9 +450,18 @@
         sendBtn.className = 'lchat-send-btn';
         sendBtn.innerHTML = ICON_SEND;
         sendBtn.setAttribute('aria-label', '보내기');
+        inputArea.appendChild(fileInput);
+        inputArea.appendChild(attachBtn);
         inputArea.appendChild(textarea);
         inputArea.appendChild(sendBtn);
         panel.appendChild(inputArea);
+
+        /* Drag & drop overlay */
+        dragOverlay = document.createElement('div');
+        dragOverlay.className = 'lchat-drag-overlay lchat-hidden';
+        dragOverlay.innerHTML = '<span class="lchat-drag-overlay-text">파일을 놓아주세요</span>';
+        panel.appendChild(dragOverlay);
+        panel.style.position = panel.style.position || 'fixed';
 
         root.appendChild(panel);
         document.body.appendChild(root);
@@ -371,17 +499,31 @@
     }
 
     /* ── UI Helpers ─────────────────────────────────────────── */
-    function showChat() {
+    function hideAllViews() {
         prechatEl.style.display = 'none';
+        offlineEl.classList.add('lchat-hidden');
+        messagesEl.classList.add('lchat-hidden');
+        inputArea.classList.add('lchat-hidden');
+    }
+
+    function showChat() {
+        hideAllViews();
         messagesEl.classList.remove('lchat-hidden');
         messagesEl.appendChild(typingEl);
         inputArea.classList.remove('lchat-hidden');
     }
 
     function showPrechat() {
+        hideAllViews();
         prechatEl.style.display = 'flex';
-        messagesEl.classList.add('lchat-hidden');
-        inputArea.classList.add('lchat-hidden');
+    }
+
+    function showOfflineForm() {
+        hideAllViews();
+        offlineEl.classList.remove('lchat-hidden');
+        if (state.visitorEmail) {
+            offlineEmailInput.value = state.visitorEmail;
+        }
     }
 
     function togglePanel() {
@@ -408,7 +550,16 @@
             } else if (state.visitorName) {
                 createRoom().then(function () { showChat(); loadMessages(); }).catch(logError);
             } else {
-                showPrechat();
+                /* Check agent availability before showing prechat or offline */
+                fetchWidgetConfig().then(function () {
+                    if (state.agentsOnline === 0) {
+                        showOfflineForm();
+                    } else {
+                        showPrechat();
+                    }
+                }).catch(function () {
+                    showPrechat(); /* fallback to normal prechat on error */
+                });
             }
             state.unread = 0;
             updateBadge();
@@ -464,6 +615,89 @@
         }
     }
 
+    /* ── File Helpers ──────────────────────────────────────── */
+    function formatFileSize(bytes) {
+        if (!bytes) return '';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function isImageType(contentType) {
+        return contentType === 'image';
+    }
+
+    function isFileType(contentType) {
+        return contentType === 'file';
+    }
+
+    function buildMessageContentEl(msg) {
+        if (isImageType(msg.content_type) && msg.file_url) {
+            var img = document.createElement('img');
+            img.className = 'lchat-msg-image';
+            img.src = resolveFileUrl(msg.file_url);
+            img.alt = msg.content || '이미지';
+            img.loading = 'lazy';
+            img.addEventListener('click', function () {
+                openImageOverlay(img.src);
+            });
+            return img;
+        }
+        if (isFileType(msg.content_type) && msg.file_url) {
+            var link = document.createElement('a');
+            link.className = 'lchat-msg-file';
+            link.href = resolveFileUrl(msg.file_url);
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.download = '';
+
+            var iconSpan = document.createElement('span');
+            iconSpan.className = 'lchat-msg-file-icon';
+            iconSpan.innerHTML = ICON_FILE;
+            link.appendChild(iconSpan);
+
+            var info = document.createElement('span');
+            info.className = 'lchat-msg-file-info';
+
+            var fname = document.createElement('div');
+            fname.className = 'lchat-msg-file-name';
+            fname.textContent = msg.content || '파일';
+            info.appendChild(fname);
+
+            if (msg.file_size) {
+                var fsize = document.createElement('div');
+                fsize.className = 'lchat-msg-file-size';
+                fsize.textContent = formatFileSize(msg.file_size);
+                info.appendChild(fsize);
+            }
+
+            link.appendChild(info);
+            return link;
+        }
+        /* Default: text */
+        var el = document.createElement('div');
+        el.textContent = msg.content;
+        return el;
+    }
+
+    function resolveFileUrl(url) {
+        if (!url) return '';
+        if (url.indexOf('http') === 0) return url;
+        return cfg.baseUrl + url;
+    }
+
+    function openImageOverlay(src) {
+        var overlay = document.createElement('div');
+        overlay.className = 'lchat-image-overlay';
+        var img = document.createElement('img');
+        img.src = src;
+        overlay.appendChild(img);
+        overlay.addEventListener('click', function () {
+            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        });
+        document.body.appendChild(overlay);
+    }
+
     /* ── Render Messages ───────────────────────────────────── */
     function renderMessages() {
         /* Keep typing indicator reference */
@@ -488,9 +722,7 @@
                     nameEl.textContent = msg.sender_name;
                     wrapper.appendChild(nameEl);
                 }
-                var contentEl = document.createElement('div');
-                contentEl.textContent = msg.content;
-                wrapper.appendChild(contentEl);
+                wrapper.appendChild(buildMessageContentEl(msg));
                 if (msg.created_at) {
                     var timeEl = document.createElement('div');
                     timeEl.className = 'lchat-msg-time';
@@ -528,9 +760,7 @@
                 nameEl.textContent = msg.sender_name;
                 wrapper.appendChild(nameEl);
             }
-            var contentEl = document.createElement('div');
-            contentEl.textContent = msg.content;
-            wrapper.appendChild(contentEl);
+            wrapper.appendChild(buildMessageContentEl(msg));
             if (msg.created_at) {
                 var timeEl = document.createElement('div');
                 timeEl.className = 'lchat-msg-time';
@@ -553,11 +783,29 @@
         };
     }
 
+    function fetchWidgetConfig() {
+        return fetch(cfg.baseUrl + '/api/widget/config?api_key=' + encodeURIComponent(cfg.apiKey), {
+            headers: { 'Accept': 'application/json' },
+        })
+        .then(function (r) {
+            if (!r.ok) throw new Error('Widget config failed: ' + r.status);
+            return r.json();
+        })
+        .then(function (json) {
+            var data = json.data || json;
+            state.agentsOnline = typeof data.agents_online === 'number' ? data.agents_online : null;
+        });
+    }
+
     function createRoom() {
+        var body = { visitor_name: state.visitorName };
+        if (state.visitorEmail) {
+            body.visitor_email = state.visitorEmail;
+        }
         return fetch(cfg.baseUrl + '/api/rooms', {
             method: 'POST',
             headers: apiHeaders(),
-            body: JSON.stringify({ visitor_name: state.visitorName }),
+            body: JSON.stringify(body),
         })
         .then(function (r) {
             if (!r.ok) throw new Error('Create room failed: ' + r.status);
@@ -674,6 +922,131 @@
             content: text,
             content_type: 'system',
             created_at: new Date().toISOString(),
+        });
+    }
+
+    /* ── File Upload ───────────────────────────────────────── */
+    var currentUploadXhr = null;
+
+    function uploadFile(file) {
+        if (!state.roomId) return;
+
+        if (file.size > 10 * 1024 * 1024) {
+            appendSystemMsg('파일 크기는 10MB를 초과할 수 없습니다.');
+            return;
+        }
+
+        var isImage = file.type && file.type.indexOf('image/') === 0;
+        var contentType = isImage ? 'image' : 'file';
+
+        uploadProgressEl.classList.remove('lchat-hidden');
+        var fillEl = uploadProgressEl.querySelector('.lchat-upload-progress-fill');
+        var labelEl = uploadProgressEl.querySelector('.lchat-upload-progress-label');
+        fillEl.style.width = '0%';
+        labelEl.textContent = '업로드 중... 0%';
+        attachBtn.disabled = true;
+
+        var formData = new FormData();
+        formData.append('file', file);
+
+        var xhr = new XMLHttpRequest();
+        currentUploadXhr = xhr;
+
+        xhr.upload.addEventListener('progress', function (e) {
+            if (e.lengthComputable) {
+                var pct = Math.round((e.loaded / e.total) * 100);
+                fillEl.style.width = pct + '%';
+                labelEl.textContent = '업로드 중... ' + pct + '%';
+            }
+        });
+
+        xhr.addEventListener('load', function () {
+            currentUploadXhr = null;
+            uploadProgressEl.classList.add('lchat-hidden');
+            attachBtn.disabled = false;
+
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    var json = JSON.parse(xhr.responseText);
+                    var data = json.data || json;
+                    sendFileMessage(data, contentType, file.name, file.size);
+                } catch (err) {
+                    logError(err);
+                    appendSystemMsg('파일 업로드 응답을 처리할 수 없습니다.');
+                }
+            } else {
+                appendSystemMsg('파일 업로드에 실패했습니다.');
+            }
+        });
+
+        xhr.addEventListener('error', function () {
+            currentUploadXhr = null;
+            uploadProgressEl.classList.add('lchat-hidden');
+            attachBtn.disabled = false;
+            appendSystemMsg('파일 업로드 중 오류가 발생했습니다.');
+        });
+
+        xhr.addEventListener('abort', function () {
+            currentUploadXhr = null;
+            uploadProgressEl.classList.add('lchat-hidden');
+            attachBtn.disabled = false;
+        });
+
+        xhr.open('POST', cfg.baseUrl + '/api/upload');
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.setRequestHeader('X-API-Key', cfg.apiKey);
+        xhr.send(formData);
+    }
+
+    function cancelUpload() {
+        if (currentUploadXhr) {
+            currentUploadXhr.abort();
+        }
+    }
+
+    function sendFileMessage(uploadData, contentType, fileName, fileSize) {
+        var fileUrl = uploadData.file_url || uploadData.url;
+        var displayName = uploadData.file_name || fileName;
+
+        var tempMsg = {
+            id: 'temp-' + Date.now(),
+            sender_type: 'visitor',
+            sender_name: state.visitorName,
+            content: displayName,
+            content_type: contentType,
+            file_url: fileUrl,
+            file_size: uploadData.file_size || fileSize,
+            created_at: new Date().toISOString(),
+        };
+        appendMessage(tempMsg);
+
+        fetch(cfg.baseUrl + '/api/rooms/' + state.roomId + '/messages', {
+            method: 'POST',
+            headers: apiHeaders(),
+            body: JSON.stringify({
+                sender_type: 'visitor',
+                sender_name: state.visitorName,
+                content: displayName,
+                content_type: contentType,
+                file_url: fileUrl,
+            }),
+        })
+        .then(function (r) {
+            if (!r.ok) throw new Error('Send file message failed: ' + r.status);
+            return r.json();
+        })
+        .then(function (json) {
+            var real = json.data || json;
+            for (var i = 0; i < state.messages.length; i++) {
+                if (state.messages[i].id === tempMsg.id) {
+                    state.messages[i] = real;
+                    break;
+                }
+            }
+        })
+        .catch(function (err) {
+            logError(err);
+            appendSystemMsg('파일 메시지 전송에 실패했습니다.');
         });
     }
 
@@ -931,6 +1304,21 @@
             }
         });
 
+        /* Offline form */
+        offlineSubmitBtn.addEventListener('click', handleOfflineSubmit);
+        offlineEmailInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                offlineMessageInput.focus();
+            }
+        });
+        offlineMessageInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleOfflineSubmit();
+            }
+        });
+
         /* Send button */
         sendBtn.addEventListener('click', function () { sendMessage(); });
 
@@ -967,6 +1355,57 @@
             var atBottom = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < threshold;
             state.userScrolled = !atBottom;
         });
+
+        /* File attach button */
+        attachBtn.addEventListener('click', function () {
+            fileInput.click();
+        });
+
+        /* File input change */
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files && fileInput.files[0]) {
+                uploadFile(fileInput.files[0]);
+                fileInput.value = '';
+            }
+        });
+
+        /* Upload cancel button */
+        uploadProgressEl.querySelector('.lchat-upload-cancel').addEventListener('click', function () {
+            cancelUpload();
+        });
+
+        /* Drag & drop on panel */
+        var dragCounter = 0;
+        panel.addEventListener('dragenter', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter++;
+            if (state.roomId && !messagesEl.classList.contains('lchat-hidden')) {
+                dragOverlay.classList.remove('lchat-hidden');
+            }
+        });
+        panel.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter--;
+            if (dragCounter <= 0) {
+                dragCounter = 0;
+                dragOverlay.classList.add('lchat-hidden');
+            }
+        });
+        panel.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        panel.addEventListener('drop', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter = 0;
+            dragOverlay.classList.add('lchat-hidden');
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0] && state.roomId) {
+                uploadFile(e.dataTransfer.files[0]);
+            }
+        });
     }
 
     function handlePrechat() {
@@ -990,6 +1429,80 @@
                 logError(err);
                 appendSystemMsg('연결에 실패했습니다. 다시 시도해주세요.');
                 prechatBtn.disabled = false;
+            });
+    }
+
+    function handleOfflineSubmit() {
+        var email = offlineEmailInput.value.trim();
+        var message = offlineMessageInput.value.trim();
+
+        if (!email || !message) {
+            if (!email) offlineEmailInput.focus();
+            else offlineMessageInput.focus();
+            return;
+        }
+
+        /* Basic email validation */
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            offlineEmailInput.focus();
+            return;
+        }
+
+        offlineSubmitBtn.disabled = true;
+        state.visitorEmail = email;
+        state.visitorName = email.split('@')[0];
+        localStorage.setItem(LS_EMAIL, email);
+        localStorage.setItem(LS_NAME, state.visitorName);
+
+        createRoom()
+            .then(function () {
+                /* Send the offline message */
+                return fetch(cfg.baseUrl + '/api/rooms/' + state.roomId + '/messages', {
+                    method: 'POST',
+                    headers: apiHeaders(),
+                    body: JSON.stringify({
+                        sender_type: 'visitor',
+                        sender_name: state.visitorName,
+                        content: message,
+                        content_type: 'text',
+                    }),
+                });
+            })
+            .then(function (r) {
+                if (!r.ok) throw new Error('Send failed: ' + r.status);
+                return r.json();
+            })
+            .then(function () {
+                /* Show success state */
+                offlineEl.innerHTML = '';
+                var successIcon = document.createElement('div');
+                successIcon.className = 'lchat-offline-icon';
+                successIcon.style.background = '#D1FAE5';
+                successIcon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#059669"/></svg>';
+                offlineEl.appendChild(successIcon);
+
+                var successTitle = document.createElement('div');
+                successTitle.className = 'lchat-offline-title';
+                successTitle.style.marginTop = '12px';
+                successTitle.textContent = '\uBA54\uC2DC\uC9C0\uAC00 \uC804\uC1A1\uB418\uC5C8\uC2B5\uB2C8\uB2E4';
+                offlineEl.appendChild(successTitle);
+
+                var successDesc = document.createElement('div');
+                successDesc.className = 'lchat-offline-desc';
+                successDesc.textContent = '\uBE60\uB978 \uC2DC\uAC04 \uB0B4 ' + email + '\uC73C\uB85C \uB2F4\uBCC0\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4.';
+                offlineEl.appendChild(successDesc);
+            })
+            .catch(function (err) {
+                logError(err);
+                offlineSubmitBtn.disabled = false;
+                /* Show inline error */
+                var existingErr = offlineEl.querySelector('.lchat-offline-success');
+                if (existingErr) existingErr.remove();
+                var errMsg = document.createElement('div');
+                errMsg.className = 'lchat-offline-success';
+                errMsg.style.color = '#DC2626';
+                errMsg.textContent = '\uC804\uC1A1\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.';
+                offlineEl.appendChild(errMsg);
             });
     }
 

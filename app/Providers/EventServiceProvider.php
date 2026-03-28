@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Events\MessageSent;
+use App\Listeners\EmailNotifyOfflineListener;
 use App\Listeners\FaqAutoReplyListener;
 use App\Listeners\OfflineAutoReplyListener;
 use App\Listeners\TelegramNotifyListener;
@@ -18,6 +19,7 @@ class EventServiceProvider extends ServiceProvider
             FaqAutoReplyListener::class,
             OfflineAutoReplyListener::class,
             TelegramNotifyListener::class,
+            EmailNotifyOfflineListener::class,
         ],
     ];
 
