@@ -5,6 +5,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY vite.config.js ./
 COPY resources ./resources
+# Tailwind @source needs access to blade files from project root
+COPY app ./app
 RUN npm run build
 
 # Stage 2: Nginx
