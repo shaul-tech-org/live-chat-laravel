@@ -135,7 +135,7 @@
 
         {{-- 메인 채팅 영역: 데스크톱 항상 표시, 모바일은 mobileView=chat 일 때만 --}}
         <section class="flex-1 flex-col bg-gray-50 dark:bg-gray-900 hidden md:flex"
-                 :class="{ '!flex': mobileView === 'chat' }">
+                 :style="mobileView === 'chat' ? 'display:flex !important' : ''"
             {{-- 빈 상태 --}}
             <div x-show="!selectedRoom" x-cloak class="flex-1 flex items-center justify-center">
                 <div class="text-center">
